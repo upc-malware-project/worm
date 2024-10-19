@@ -1,1 +1,0 @@
-$COSMO/bin/cosmoc++  -o malware src/main.cpp

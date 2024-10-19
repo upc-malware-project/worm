@@ -1,6 +1,11 @@
-COSMO=../cosmocc
+COSMO=cosmocc
 CPPFLAGS=-g
-CXX=${COSMO}/bin/cosmoc++
+
+all-linux: CXX=g++
+all-linux: all
+
+all-multi: CXX=${COSMO}/bin/cosmoc++
+all-multi: all
 
 all: main
 
