@@ -22,7 +22,7 @@ jobs:
           sudo chmod +x /usr/bin/ape
 
       - shell: bash
-        if: hashFiles(format('{0}/cosmocc', github.workspace))
+        if: !hashFiles(format('{0}/cosmocc', github.workspace))
         run: |
           mkdir cosmocc
           cd cosmocc
