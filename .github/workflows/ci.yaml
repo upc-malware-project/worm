@@ -35,4 +35,5 @@ jobs:
 
       - shell: bash
         name: run
+        timeout-minutes: 1
         run: ./bin/main.com
