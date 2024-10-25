@@ -17,13 +17,13 @@ jobs:
 
       - shell: bash
         name: install toolchain
-        run:
+        run: |
           sudo wget -O /usr/bin/ape https://cosmo.zip/pub/cosmos/bin/ape-$(uname -m).elf
           sudo chmod +x /usr/bin/ape
 
       - shell: bash
         if: hashFiles(format('{0}/cosmocc', github.workspace))
-        run:
+        run: |
           mkdir cosmocc
           cd cosmocc
           wget https://cosmo.zip/pub/cosmocc/cosmocc.zip
