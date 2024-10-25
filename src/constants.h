@@ -15,7 +15,7 @@
 
 #define LONG int32_t /* [sic] */
 #define WCHAR char16_t /* [sic] */
-#define BOOL bool32 /* [sic] */
+#define BOOL unsigned char
 
 #define TRUE 1
 #define FALSE 0

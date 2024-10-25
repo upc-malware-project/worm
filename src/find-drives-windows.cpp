@@ -26,17 +26,14 @@ int getUsbDrives() {
                               0,
                               0);
 
-      if (const char16_t *error = getErrorString()) {
-        printf("%hs\n", error);
+      if (handle == -1) {
+        printf("%hs\n", getErrorString());
         return -1;
       }
 
-      printf("found drive %hs %d\n", deviceName, handle);
-
       DWORD bytes;
-      STORAGE_DEVICE_DESCRIPTOR devd;
-      STORAGE_PROPERTY_QUERY query;
-      memset(&query, 0, sizeof(query));
+      STORAGE_DEVICE_DESCRIPTOR devd = {};
+      STORAGE_PROPERTY_QUERY query = {};
       query.PropertyId = StorageDeviceProperty;
       query.QueryType = PropertyStandardQuery;
 
@@ -49,7 +46,9 @@ int getUsbDrives() {
         return -1;
       }
 
-      printf("type %hs %d\n", deviceName, devd.BusType);
+      if (devd.BusType == BusTypeUsb) {
+        printf("Found USB: %hs\n", deviceName);
+      }
     }
   }
   return 0;
