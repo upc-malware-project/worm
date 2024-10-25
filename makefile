@@ -1,17 +1,22 @@
-COSMO=cosmocc
-CPPFLAGS=-g
+COSMOCC=cosmocc
+CXX=$(COSMOCC)/bin/x86_64-unknown-cosmo-c++
 
-all-linux: CXX=g++
-all-linux: all
+CPPFLAGS=-g \
+-I${COSMOCC}/library \
+-L${COSMOCC}/lib \
+-D__x86_64__ \
+-DNDEBUG \
+-DTINY \
 
-all-multi: CXX=${COSMO}/bin/cosmoc++
-all-multi: all
-
+all: BUILDLOG=bin/log.txt
 all: main
 
 main:
 	mkdir -p bin
-	${CXX} ${CPPFLAGS} -o bin/malware src/main.cpp
+	${CXX} ${CPPFLAGS} \
+	-o bin/main.com \
+	src/*.cpp \
+	src/*.h
 
 clean:
 	rm -rf ./bin
