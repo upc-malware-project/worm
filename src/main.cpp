@@ -1,7 +1,12 @@
-#include <iostream>
+#include <cosmo.h>
+#include <cstdio>
+#include "spreader.h"
 
-int main()
-{
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
+int main() {
+  printf("Initialize\n");
+  printf("Windows: %d\n", IsWindows());
+  printf("Linux: %d\n", IsLinux());
+
+  spread();
+  return 0;
 }
