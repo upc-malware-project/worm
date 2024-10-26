@@ -1,14 +1,12 @@
 COSMOCC=cosmocc
 CXX=$(COSMOCC)/bin/x86_64-unknown-cosmo-c++
 
-CPPFLAGS=-g \
--I${COSMOCC}/library \
--L${COSMOCC}/lib \
--D__x86_64__ \
--DNDEBUG \
--DTINY \
+CPPFLAGS=\
+-Os
 
-all: BUILDLOG=bin/log.txt
+export BUILDLOG=bin/log.txt
+#export MODE=tiny
+
 all: main
 
 main:

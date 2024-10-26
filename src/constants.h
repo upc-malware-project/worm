@@ -4,6 +4,7 @@
 #define IOCTL_STORAGE_QUERY_PROPERTY (((0x0000002d) << 16) | ((0) << 14) | ((0x0500) << 2) | (0))
 #undef NULL
 #define NULL 0
+#define MAX_PATH 260
 
 #define WINAPI __msabi
 #define STDMETHODCALLTYPE __msabi

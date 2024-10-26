@@ -3,10 +3,11 @@
 #include "spreader.h"
 
 int main() {
-  printf("Initialize\n");
-  printf("Windows: %d\n", IsWindows());
-  printf("Linux: %d\n", IsLinux());
-
+  ShowCrashReports();
+  setbuf(stdout, 0);
+  fprintf(stdout, "Initialize\n");
+  fprintf(stdout, "Windows: %d\n", IsWindows());
+  fprintf(stdout, "Linux: %d\n", IsLinux());
   spread();
   return 0;
 }
