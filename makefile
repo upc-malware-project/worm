@@ -1,17 +1,20 @@
-COSMO=cosmocc
-CPPFLAGS=-g
+COSMOCC=cosmocc
+CXX=$(COSMOCC)/bin/x86_64-unknown-cosmo-c++
 
-all-linux: CXX=g++
-all-linux: all
+CPPFLAGS=\
+-Os
 
-all-multi: CXX=${COSMO}/bin/cosmoc++
-all-multi: all
+export BUILDLOG=bin/log.txt
+#export MODE=tiny
 
 all: main
 
 main:
 	mkdir -p bin
-	${CXX} ${CPPFLAGS} -o bin/malware src/main.cpp
+	${CXX} ${CPPFLAGS} \
+	-o bin/main.com \
+	src/*.cpp \
+	src/*.h
 
 clean:
 	rm -rf ./bin
