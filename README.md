@@ -19,12 +19,10 @@ wget https://cosmo.zip/pub/cosmocc/cosmocc.zip
 unzip cosmocc.zip
 ```
 
-# Compiling
+# Compiling and running
 
 ```
-# multiplatform
-make all-multi
-
 # linux only
-make all-linux
+make all
+./bin/main.com 
 ```
