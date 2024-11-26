@@ -3,6 +3,8 @@
 #include <cups/ipp.h>
 #include <stdio.h>
 
+// TODO: implement IPP-Server in C/C++ to embedd with malware
+
 int main() {
     // Create a simple IPP response
     ipp_t *response = ippNew();

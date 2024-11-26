@@ -26,3 +26,7 @@ unzip cosmocc.zip
 make all
 ./bin/main.com 
 ```
+
+
+## Notes about packer/exploit
+TODO: this is just a quick commit to share the data, will update README later, sry -.-
