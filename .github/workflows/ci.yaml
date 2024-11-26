@@ -9,34 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/cache@v4
-        with:
-          key: 'key'
-          path: '${{ github.workspace }}/cosmocc'
-
-      - shell: bash
-        name: install ape
-        run: |
-          sudo wget -O /usr/bin/ape https://cosmo.zip/pub/cosmos/bin/ape-$(uname -m).elf
-          sudo chmod +x /usr/bin/ape
-          sudo sh -c "echo ':APE:M::MZqFpD::/usr/bin/ape:' >/proc/sys/fs/binfmt_misc/register"
-          sudo sh -c "echo ':APE-jart:M::jartsr::/usr/bin/ape:' >/proc/sys/fs/binfmt_misc/register"
-
-      - shell: bash
-        name: install toolchain
-        if: ${{ hashFiles(format('{0}/cosmocc', github.workspace)) == ''}}
-        run: |
-          mkdir cosmocc
-          cd cosmocc
-          wget https://cosmo.zip/pub/cosmocc/cosmocc.zip
-          unzip cosmocc.zip
-
       - shell: bash
         name: build
-        run: make all
-
-      - shell: bash
-        name: run
-        timeout-minutes: 1
-        run: ./bin/main.com
+        run: |
+          sudo apt update
+          sudo apt install gcc-11
+          make
