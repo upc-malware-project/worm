@@ -139,8 +139,10 @@ void scan_net() {
     strncpy(ifreq_mask.ifr_name, ifa->ifa_name, IFNAMSIZ);
     strncpy(ifreq_addr.ifr_name, ifa->ifa_name, IFNAMSIZ);
 
-    CHECK(ioctl(fd, SIOCGIFADDR, &ifreq_addr) == -1);
-    CHECK(ioctl(fd, SIOCGIFNETMASK, &ifreq_mask) == -1);
+    if (ioctl(fd, SIOCGIFADDR, &ifreq_addr) == -1 || ioctl(fd, SIOCGIFNETMASK, &ifreq_mask) == -1) {
+      DEBUG_LOG("skipping interface %s since it doesn't have inet or netmask", ifa->ifa_name);
+      continue;
+    }
 
     ipv4 = (struct sockaddr_in *)&ifreq_addr.ifr_ifru.ifru_addr;
     net_mask = (struct sockaddr_in *)&ifreq_mask.ifr_ifru.ifru_netmask;
