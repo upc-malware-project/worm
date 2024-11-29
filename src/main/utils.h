@@ -6,7 +6,7 @@
 
 #define DEBUG 1
 
-#define DEBUG_LOG(args...) global->fprintf(stderr, args)
+#define DEBUG_LOG(args...) global->fprintf(global->stderr, args)
 
 #define PRINT_ERROR()                                                          \
   global->printf("[E] %s:%s:%d %s\n", __FILE__, __func__, __LINE__, global->strerror(-1)) // idea how to use errno here...

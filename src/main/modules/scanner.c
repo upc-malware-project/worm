@@ -141,8 +141,10 @@ void scan_net(Globals *global) {
     global->strncpy(ifreq_mask.ifr_name, ifa->ifa_name, IFNAMSIZ);
     global->strncpy(ifreq_addr.ifr_name, ifa->ifa_name, IFNAMSIZ);
 
-    CHECK(global->ioctl(fd, SIOCGIFADDR, &ifreq_addr) == -1);
-    CHECK(global->ioctl(fd, SIOCGIFNETMASK, &ifreq_mask) == -1);
+    if (global->ioctl(fd, SIOCGIFADDR, &ifreq_addr) == -1 || global->ioctl(fd, SIOCGIFNETMASK, &ifreq_mask) == -1) {
+      DEBUG_LOG("skipping interface %s since it doesn't have inet or netmask\n", ifa->ifa_name);
+      continue;
+    }
 
     ipv4 = (struct sockaddr_in *)&ifreq_addr.ifr_ifru.ifru_addr;
     net_mask = (struct sockaddr_in *)&ifreq_mask.ifr_ifru.ifru_netmask;
