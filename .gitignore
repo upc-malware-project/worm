@@ -92,3 +92,4 @@ dkms.conf
 /x64
 /bin
 /cosmocc
+/src/microworm.c
