@@ -1,20 +1,46 @@
-COSMOCC=cosmocc
-CXX=$(COSMOCC)/bin/x86_64-unknown-cosmo-c++
+CXX=g++
+CC=gcc
 
-CPPFLAGS=\
--Os
+TARGET_EXEC := main
 
-export BUILDLOG=bin/log.txt
-#export MODE=tiny
+BUILD_DIR := ./bin
+SRC_DIRS := ./src
 
-all: main
+SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.c -or -name *.s)
+OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
+DEPS := $(OBJS:.o=.d)
 
-main:
-	mkdir -p bin
-	${CXX} ${CPPFLAGS} \
-	-o bin/main.com \
-	src/*.cpp \
-	src/*.h
+INC_DIRS := $(shell find $(SRC_DIRS) -type d)
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
+
+CPPFLAGS ?= $(INC_FLAGS) -g -MMD -MP
+
+$(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
+	$(CC) $(OBJS) -o $@ $(LDFLAGS)
+
+# assembly
+$(BUILD_DIR)/%.s.o: %.s
+	$(MKDIR_P) $(dir $@)
+	$(AS) $(ASFLAGS) -c $< -o $@
+
+# c source
+$(BUILD_DIR)/%.c.o: %.c
+	$(MKDIR_P) $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+# c++ source
+$(BUILD_DIR)/%.cpp.o: %.cpp
+	$(MKDIR_P) $(dir $@)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+
+.PHONY: clean
+
+all: $(BUILD_DIR)/$(TARGET_EXEC)
 
 clean:
-	rm -rf ./bin
+	$(RM) -r $(BUILD_DIR)
+
+-include $(DEPS)
+
+MKDIR_P ?= mkdir -p

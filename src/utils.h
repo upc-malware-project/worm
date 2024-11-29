@@ -1,24 +1,21 @@
 #pragma once
-#include <libc/macros.h>
-#include <libc/nt/runtime.h>
-#include <libc/nt/process.h>
-#include <libc/nt/enum/formatmessageflags.h>
-#include <libc/nt/enum/lang.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-static char16_t* getErrorString() {
-    static char16_t msg[256];
-    int err = GetLastError();
+#define DEBUG 1
 
-    if (err == 0) {
-        return nullptr;
-    }
+#define DEBUG_LOG(args...) fprintf(stderr, args)
 
-    FormatMessage(kNtFormatMessageFromSystem | kNtFormatMessageIgnoreInserts,
-                  nullptr,
-                  err,
-                  MAKELANGID(kNtLangNeutral, kNtSublangDefault),
-                  msg,
-                  ARRAYLEN(msg),
-                  nullptr);
-    return msg;
-}
+#define PRINT_ERROR()                                                          \
+  printf("[E] %s:%s:%d %s\n", __FILE__, __func__, __LINE__,               \
+         strerror(errno))
+
+#define CHECK(e)                                                            \
+  do {                                                                         \
+    if ((e)) {                                                                 \
+      PRINT_ERROR();                                                           \
+      exit(1);                                                                 \
+    }                                                                          \
+  } while (0)
