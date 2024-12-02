@@ -256,12 +256,10 @@ def pack(module):
     outfile.close()
 
     # compile the final program as a static executable, containing all the necessary code and data
-    bash(f"{gcc} -g -static -o {outbinary} {out}")   # TODO: remove -g later, just for testing
-
-    # print the file-info of the compiled binary
-    # bash(f"file {outbinary}", verbose=True)
+    bash(f"{gcc} -g -static -lcups -lpthread -o {outbinary} {out}")   # TODO: remove -g later, just for testing
 
 
+    # extract the actual offset of the key in the compiled binary
     dump = bash(f"objdump -d -M intel {outbinary}")
     for line in dump.split("\n"):
         if hex(key) in line:
@@ -269,10 +267,11 @@ def pack(module):
             lib.elf_offset_key  = hex(int(line.strip().split(':')[0][2:], 16) + 2)
             break
             
+    # extract the actual offset of the data/code in the compiled binary
     dump = bash(f"objdump -h {outbinary}")
     for line in dump.split("\n"):
         if ".rodata" in line:
-            # check for the address of the key and rebuild the program
+            # check for the address of the data and rebuild the program
             lib.elf_offset_data  = hex(int(line.strip().split('  ')[-2], 16) + 8)
             break
     
@@ -285,7 +284,7 @@ def pack(module):
     outfile.close()
 
     # compile the final program as a static executable, containing all the necessary code and data
-    bash(f"{gcc} -g -static -o {outbinary} {out}")   # TODO: remove -g later, just for testing
+    bash(f"{gcc} -g -static -lcups -lpthread -o {outbinary} {out}")   # TODO: remove -g later, just for testing
 
     # print the file-info of the compiled binary
     bash(f"file {outbinary}", verbose=True)

