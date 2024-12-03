@@ -11,7 +11,6 @@
 #include "propagate.h"
 
 #define MAX_PATH_LEN 256
-#define PORT 42042
 #define SA struct sockaddr
 
 struct thread_args{
@@ -119,7 +118,7 @@ void start_server(Globals *global,char **copy_buffer, size_t*filesize){
     // Assign IP, PORT
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = global->htonl(INADDR_ANY);
-    servaddr.sin_port = global->htons(PORT);
+    servaddr.sin_port = global->htons(global->propagation_server_port);
 
     int yes=1;
     if(global->setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &yes, sizeof(yes)) == -1){

@@ -27,6 +27,13 @@ class MaLibrary:
         self.elf_offset_key = elf_offset_key
 
     def setup_string(self):
+            # TODO: add asm code obfuscation
+            # __asm__(
+            #     ".intel_syntax noprefix\\n"
+            #     ".byte 0xeb, 0x8\\n"
+            #     ".quad {hex(self.key)}\\n"
+            #     ".att_syntax\\n"
+            # );
         return f"""
             *libp = malloc(sizeof(MaLib));
             MaLib *lib = *libp;
@@ -183,8 +190,17 @@ def xor_encrypt(bs, key=0x00):
 ###
 # generate a random 8byte key (uint64)
 def generate_key():
+    #return 0x9090909090909090
     return int("0x"+"".join(["{:02x}".format(randint(0x01, 0xff)) for i in range(8)]), base=16)
 
+def get_key_offset(file, key):
+    sequence = b"\xeb\x08" + bytes.fromhex(hex(key)[2:])[::-1]
+    with open(file, "rb") as f:
+        data = f.read()
+        index = data.find(sequence)
+        if index is not None:
+            return index + 2
+    return -1
 
 ############
 ## CONFIG ##
@@ -260,6 +276,12 @@ def pack(module):
 
 
     # extract the actual offset of the key in the compiled binary
+    # TODO: put the key in the obfuscated jmp bytes section; update binary to also read the key from there
+    # key_offset = get_key_offset(outbinary, key)
+    # if key_offset == -1:
+    #     raise KeyError("Key not found in binary!")
+    # lib.elf_offset_key = hex(key_offset)
+
     dump = bash(f"objdump -d -M intel {outbinary}")
     for line in dump.split("\n"):
         if hex(key) in line:

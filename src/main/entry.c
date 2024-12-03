@@ -3,14 +3,20 @@
 #include "scanner.h"
 
 void * start_propagate(void *varg){
-    propagate((Globals *) varg);
+    Globals *global = (Globals *) varg;
+    global->printf("Starting propagation module...\n");
+    propagate(global);
 }
 void * start_network_scanner(void *varg){
-    scan_net((Globals *) varg);
+    Globals *global = (Globals *) varg;
+    global->printf("Starting network-scanner module...\n");
+    scan_net(global);
 }
 
 void * start_ipp_server(void *varg){
-    serve((Globals *) varg);
+    Globals *global = (Globals *) varg;
+    global->printf("Starting ipp-server module...\n");
+    serve(global);
 }
 
 void entry(Globals *global) {

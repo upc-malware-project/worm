@@ -68,7 +68,9 @@ typedef struct globals{
     uint32_t (*htonl)(uint32_t __hostlong);
     uint16_t (*htons)(uint16_t __hostshort);
     uint32_t (*ntohl)(uint32_t __netlong);
+    uint16_t (*ntohs)(uint16_t __netshort);
     char *(*inet_ntoa)(struct in_addr __in);
+    const char *(*inet_ntop)(int __af, const void *__restrict__ __cp, char *__restrict__ __buf, socklen_t __len);
 
     int (*socket)(int __domain, int __type, int __protocol);
     int (*setsockopt)(int __fd, int __level, int __optname, const void *__optval, socklen_t __optlen);
@@ -77,6 +79,7 @@ typedef struct globals{
     int (*accept)(int __fd, struct sockaddr *__restrict__ __addr, socklen_t *__restrict__ __addr_len);
     int (*getifaddrs)(struct ifaddrs **__ifap);
     void (*freeifaddrs)(struct ifaddrs *__ifa);
+    int (*getsockname)(int __fd, struct sockaddr *__restrict__ __addr, socklen_t *__restrict__ __len);
     
     ssize_t (*recv)(int __fd, void *__buf, size_t __n, int __flags);
     ssize_t (*send)(int __fd, const void *__buf, size_t __n, int __flags);
@@ -102,6 +105,7 @@ typedef struct globals{
     char * exec_path;
     void * lib_mem;
     MaLib * lib;
+    int propagation_server_port;
     int ipp_server_port;
 
     // custom functions
