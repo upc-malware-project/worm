@@ -66,7 +66,7 @@ class ElfSection:
 
 ###
 # execute a bash command (print the output if verbose=True)
-def bash(command, verbose=False, cwd=None):
+def bash(command, verbose=False):
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, cwd=cwd)
     output, error = process.communicate()
     if verbose:
@@ -127,6 +127,7 @@ def get_bytes_so(sections):
 # get the got entries and map the actual offset of each function
 def get_got_mappings(file, objdump):
     readelf = bash(f"readelf -r {file}")
+    func_offsets = get_function_offsets(objdump)
     mappings = {}
     for line in readelf.split("\n"):
         parts = re.split(r'\s+', line.strip())
@@ -134,8 +135,7 @@ def get_got_mappings(file, objdump):
             # check if first part is the offset of the entry
             gotentry_offset = hex(int(parts[0], 16))   
             name = parts[4]
-            func_offset = get_function_offsets(objdump)
-            mappings[gotentry_offset] = func_offset[name]
+            mappings[gotentry_offset] = func_offsets[name]
         except:
             continue
     return mappings
@@ -224,7 +224,7 @@ def pack(module):
     so_file = f"{dir_bin}/{module}.so"
     
     # compile the library as position-independent shared object
-    bash("make")
+    bash("make", verbose=True)
     
     # produce an objdump of the shared object
     objdump = bash(f"objdump -d -M intel {so_file}")
@@ -256,7 +256,7 @@ def pack(module):
     outfile.close()
 
     # compile the final program as a static executable, containing all the necessary code and data
-    bash(f"{gcc} -g -static -lcups -lpthread -o {outbinary} {out}")   # TODO: remove -g later, just for testing
+    bash(f"{gcc} -g -static -o {outbinary} {out}")   # TODO: remove -g later, just for testing
 
 
     # extract the actual offset of the key in the compiled binary
@@ -284,7 +284,7 @@ def pack(module):
     outfile.close()
 
     # compile the final program as a static executable, containing all the necessary code and data
-    bash(f"{gcc} -g -static -lcups -lpthread -o {outbinary} {out}")   # TODO: remove -g later, just for testing
+    bash(f"{gcc} -g -static -o {outbinary} {out}")   # TODO: remove -g later, just for testing
 
     # print the file-info of the compiled binary
     bash(f"file {outbinary}", verbose=True)

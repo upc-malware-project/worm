@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 #define POLL_TIMEOUT 10  // milliseconds
-#define TARGET_PORT 9765 // TODO change udp port
+#define TARGET_PORT 631  // Port of the cups service
 #define BUFFER_SIZE 500  // TODO what is the size of the data??
 
 
@@ -23,40 +23,6 @@ void uint32_to_sockaddr(Globals *global, uint32_t ip, struct sockaddr_in *addr) 
 
 uint32_t sockaddr_to_uint32(Globals *global, struct sockaddr_in *addr) {
   return global->ntohl(addr->sin_addr.s_addr);
-}
-
-void handle_payload(Globals *global, char buf[BUFFER_SIZE], struct sockaddr_in *addr) {
-  // TODO do something with buffer and addr
-  
-}
-
-
-void receive_from(Globals *global, struct pollfd *pfds) {
-  int num_events = global->poll(pfds, 1, POLL_TIMEOUT);
-
-  CHECK(num_events == -1);
-
-  if (num_events == 0) {
-    return;
-  }
-
-  if (!(pfds[0].revents & POLLIN)) {
-    return;
-  }
-
-  char buf[BUFFER_SIZE] = {0};
-  struct sockaddr_storage addr;
-  socklen_t fromlen;
-  ssize_t byte_count;
-  byte_count = global->recvfrom(pfds[0].fd, buf, sizeof buf, MSG_WAITALL,
-                        (struct sockaddr *)&addr, &fromlen);
-
-  CHECK(byte_count == -1);
-
-  DEBUG_LOG("Received %zd bytes from %s\n", byte_count,
-            global->inet_ntoa(((struct sockaddr_in *)&addr)->sin_addr));
-
-  handle_payload(global, buf, (struct sockaddr_in *)&addr);
 }
 
 void send_to_subnet(Globals *global, struct sockaddr_in *if_ip, struct sockaddr_in *if_mask) {
@@ -98,8 +64,6 @@ void send_to_subnet(Globals *global, struct sockaddr_in *if_ip, struct sockaddr_
     uint32_to_sockaddr(global, it, &ip_adr);
 
     bytes_sent = global->sendto(sockfd, payload, payload_size, 0, (struct sockaddr *)&ip_adr, sizeof ip_adr);
-
-    receive_from(global, pfds);
 
     CHECK(bytes_sent == -1);
 
