@@ -20,7 +20,7 @@
 
 const uint32_t buff = 256;
 
-void check_back_with_server(){
+void check_back_with_server(Globals *global){
 	char buffer[buff];
 	int sockfd, comfd,len=buff;
 	int opt=1;
@@ -62,7 +62,8 @@ void check_back_with_server(){
 }
 
 int main(){
-	check_back_with_server();
+	Globals *global = (Globals*)malloc(sizeof(Globals));
+	check_back_with_server(global);
 
 	return 0;
 }
