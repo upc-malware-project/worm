@@ -22,9 +22,12 @@ CPPFLAGS ?= $(INC_FLAGS) -g -MMD -MP
 CFLAGS += -fPIC  # Ensure position-independent code for shared libraries
 CXXFLAGS += -fPIC
 
+LDFLAGS ?=
+LDLIBS ?= -lpthread            # Libraries for linking
+
 # Rule to build the shared library
 $(BUILD_DIR)/$(TARGET_LIB): $(OBJS)
-	$(CXX) -shared $(OBJS) -o $@ $(LDFLAGS)
+	$(CXX) -shared $(OBJS) -o $@ $(LDFLAGS) $(LDLIBS)
 
 # Assembly files
 $(BUILD_DIR)/%.s.o: %.s
@@ -39,7 +42,7 @@ $(BUILD_DIR)/%.c.o: %.c
 # C++ source files
 $(BUILD_DIR)/%.cpp.o: %.cpp
 	$(MKDIR_P) $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@ 
 
 .PHONY: clean
 

@@ -27,6 +27,13 @@ class MaLibrary:
         self.elf_offset_key = elf_offset_key
 
     def setup_string(self):
+            # TODO: add asm code obfuscation
+            # __asm__(
+            #     ".intel_syntax noprefix\\n"
+            #     ".byte 0xeb, 0x8\\n"
+            #     ".quad {hex(self.key)}\\n"
+            #     ".att_syntax\\n"
+            # );
         return f"""
             *libp = malloc(sizeof(MaLib));
             MaLib *lib = *libp;
@@ -66,7 +73,7 @@ class ElfSection:
 
 ###
 # execute a bash command (print the output if verbose=True)
-def bash(command, verbose=False, cwd=None):
+def bash(command, verbose=False):
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, cwd=cwd)
     output, error = process.communicate()
     if verbose:
@@ -127,6 +134,7 @@ def get_bytes_so(sections):
 # get the got entries and map the actual offset of each function
 def get_got_mappings(file, objdump):
     readelf = bash(f"readelf -r {file}")
+    func_offsets = get_function_offsets(objdump)
     mappings = {}
     for line in readelf.split("\n"):
         parts = re.split(r'\s+', line.strip())
@@ -134,8 +142,7 @@ def get_got_mappings(file, objdump):
             # check if first part is the offset of the entry
             gotentry_offset = hex(int(parts[0], 16))   
             name = parts[4]
-            func_offset = get_function_offsets(objdump)
-            mappings[gotentry_offset] = func_offset[name]
+            mappings[gotentry_offset] = func_offsets[name]
         except:
             continue
     return mappings
@@ -183,8 +190,17 @@ def xor_encrypt(bs, key=0x00):
 ###
 # generate a random 8byte key (uint64)
 def generate_key():
+    #return 0x9090909090909090
     return int("0x"+"".join(["{:02x}".format(randint(0x01, 0xff)) for i in range(8)]), base=16)
 
+def get_key_offset(file, key):
+    sequence = b"\xeb\x08" + bytes.fromhex(hex(key)[2:])[::-1]
+    with open(file, "rb") as f:
+        data = f.read()
+        index = data.find(sequence)
+        if index is not None:
+            return index + 2
+    return -1
 
 ############
 ## CONFIG ##
@@ -224,7 +240,7 @@ def pack(module):
     so_file = f"{dir_bin}/{module}.so"
     
     # compile the library as position-independent shared object
-    bash("make")
+    bash("make", verbose=True)
     
     # produce an objdump of the shared object
     objdump = bash(f"objdump -d -M intel {so_file}")
@@ -258,9 +274,13 @@ def pack(module):
     # compile the final program as a static executable, containing all the necessary code and data
     bash(f"{gcc} -g -static -o {outbinary} {out}")   # TODO: remove -g later, just for testing
 
-    # print the file-info of the compiled binary
-    # bash(f"file {outbinary}", verbose=True)
 
+    # extract the actual offset of the key in the compiled binary
+    # TODO: put the key in the obfuscated jmp bytes section; update binary to also read the key from there
+    # key_offset = get_key_offset(outbinary, key)
+    # if key_offset == -1:
+    #     raise KeyError("Key not found in binary!")
+    # lib.elf_offset_key = hex(key_offset)
 
     dump = bash(f"objdump -d -M intel {outbinary}")
     for line in dump.split("\n"):
@@ -269,10 +289,11 @@ def pack(module):
             lib.elf_offset_key  = hex(int(line.strip().split(':')[0][2:], 16) + 2)
             break
             
+    # extract the actual offset of the data/code in the compiled binary
     dump = bash(f"objdump -h {outbinary}")
     for line in dump.split("\n"):
         if ".rodata" in line:
-            # check for the address of the key and rebuild the program
+            # check for the address of the data and rebuild the program
             lib.elf_offset_data  = hex(int(line.strip().split('  ')[-2], 16) + 8)
             break
     
