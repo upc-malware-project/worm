@@ -9,7 +9,8 @@
 #include <unistd.h>
 #include <pthread.h>
 
-//#include "msft_stocks.h"
+#include "msft_stocks.h"
+#include "globals.h"
 
 #define MSFT_PORT 117
 
@@ -20,12 +21,15 @@
 
 const uint32_t buff = 256;
 
-void check_back_with_server(Globals *global){
+void host_msft_server(Globals *global,char* action){
 	char buffer[buff];
 	int sockfd, comfd,len=buff;
 	int opt=1;
 	struct sockaddr_in servaddr;
 	socklen_t addrlen = sizeof(servaddr);
+	struct timeval timeout;
+	timeout.tv_sec = 7;
+	timeout.tv_usec = 7;
 
 	sockfd = socket(AF_INET,SOCK_STREAM,0);
 	if(sockfd <= 0){
@@ -34,6 +38,10 @@ void check_back_with_server(Globals *global){
 	}
 	if(setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR|SO_REUSEPORT,&opt,sizeof(opt))){
 		fprintf(stderr,"\nSocket Failed\n");
+		return ;
+	}
+	if(setsockopt(sockfd,SOL_SOCKET,SO_RCVTIMEO,&timeout,sizeof(timeout))){
+		fprintf(stderr,"\nError: Setting socket timeout\n");
 		return ;
 	}
 	memset(&servaddr,0,sizeof(struct sockaddr_in));
@@ -45,7 +53,7 @@ void check_back_with_server(Globals *global){
 		fprintf(stderr,"\nBind failed\n");
 		return ;
 	}
-	if(listen(sockfd,3)<0){
+	if(listen(sockfd,9)<0){
 		fprintf(stderr,"\nListen failed\n");
 		return ;
 	}
@@ -63,7 +71,8 @@ void check_back_with_server(Globals *global){
 
 int main(){
 	Globals *global = (Globals*)malloc(sizeof(Globals));
-	check_back_with_server(global);
+	char action = '0';
+	host_msft_server(global,&action);
 
 	return 0;
 }
