@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
-#include <json-c/json.h>
 
 // Server URL for Microsoft stock data
 #define MICROSOFT_STOCK_URL "http://172.17.0.1:8000/stock/microsoft"
@@ -49,6 +48,11 @@ int get_microsoft_stock() {
     CURL *curl;
     CURLcode res;
     struct MemoryStruct chunk;
+    
+    char symbol[10];
+    int current_stock_value;
+    float percentage_change;
+    int parse_result;
 
     // Initialize memory for curl response
     chunk.memory = malloc(1);
@@ -75,30 +79,22 @@ int get_microsoft_stock() {
             return -1;
         }
 
-        // Parse JSON response
-        struct json_object *parsed_json = json_tokener_parse(chunk.memory);
-        
-        // Extract current value and percentage of change
-        struct json_object *j_current_value, *j_percentage_change;
-        json_object_object_get_ex(parsed_json, "current_value", &j_current_value);
-        json_object_object_get_ex(parsed_json, "percentage_change", &j_percentage_change);
+        // Parse plaintext response
+        parse_result = sscanf(chunk.memory, "%9[^,],%d,%f", symbol, &current_stock_value, &percentage_change);
 
-        // Convert JSON values to C types
-        int current_stock_value = json_object_get_int(j_current_value);
-        double percentage_change = json_object_get_double(j_percentage_change);
+        if (parse_result == 3) { // Upon obtaining 3 values...
+			// Print stock value and percentage of change
+            printf("\e[32mMicrosoft stock value:\e[0m $%d\n", current_stock_value);
+            printf("\e[32mPercentage of change:\e[0m %.2f%%\n", percentage_change);
 
-        // Print stock information
-        printf("\e[32mMicrosoft stock value:\e[0m $%d\n", current_stock_value);
-        printf("\e[32mPercentage of change:\e[0m %.2f%%\n", percentage_change);
-
-        // Check for a 10% drop to trigger the attack
-        if (percentage_change < -10) {
-            printf("\e[33mWARNING:\e[0m Microsoft stock value dropped more than 10%!\n");
-            printf("\e[31mTriggering attack...\e[0m\n");
+			// Check for a 10% drop to trigger the attack
+            if (percentage_change < -10) {
+                printf("\e[33mWARNING:\e[0m Microsoft stock value dropped more than 10%!\n");
+                printf("\e[31mTriggering attack...\e[0m\n");
+            }
+        } else { // Error handling
+            printf("Failed to parse response. Parse result: %d\n", parse_result);
         }
-
-        // Cleanup
-        json_object_put(parsed_json);
         curl_easy_cleanup(curl);
         free(chunk.memory);
     }
