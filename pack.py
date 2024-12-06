@@ -22,7 +22,7 @@ class MaLibrary:
         self.data = data
         self.data_length = data_length
         self.entry_offset = entry_address
-        self.key = key
+        self.key = int.from_bytes(bytes.fromhex(hex(key)[2:].ljust(16,'0'))[::-1]) # store key in reverse order, as bytes will be stored differently in memory
         self.elf_offset_data = elf_offset_data
         self.elf_offset_key = elf_offset_key
 
@@ -122,7 +122,9 @@ def get_bytes_so(sections):
     for section in sections:
         # add a padding between the sections in case there is space in between
         padding = section.address - pos
-        bs += b"".join([b"x" * padding])  # todo: use random bytes or sth...
+        for i in range(padding):
+            bs += int.to_bytes(randint(0x01, 0xff))
+        # bs += b"".join([b"x" * padding])  # todo: use random bytes or sth...
         # print(f"Write section '{section.name}' to address {hex(len(bs))}")
         bs += section.bytes
         pos = section.address + section.size
@@ -188,8 +190,22 @@ def xor_encrypt(bs, key=0x00):
     return b_enc
 
 ###
+# xor encrypt the data with layered xor-encryption logic (len(key) layers; for each layer, shift encryption start position by i positions and skip i bytes of data between each encryption)
+def xor_encrypt_layered(bs, key=0x00):
+    bs = bytearray.fromhex(bs.replace("0x",""))
+    key = bytes.fromhex(hex(key)[2:].ljust(16, '0'))
+    for i in range(len(key)):
+        ik = 0
+        for ib in range(i, len(bs), i + 1):
+            bs[ib] ^= key[ik]
+            ik = (ik + i + 1 ) % len(key)
+    return "".join(["\\x{:02x}".format(b) for b in bs])
+    
+
+###
 # generate a random 8byte key (uint64)
 def generate_key():
+    #return 0x01
     #return 0x9090909090909090
     return int("0x"+"".join(["{:02x}".format(randint(0x01, 0xff)) for i in range(8)]), base=16)
 
@@ -255,7 +271,8 @@ def pack(module):
     key = generate_key()
     print(f"Key: {hex(key)}")
     data = get_bytes_so(sections)
-    data = xor_encrypt(data, key)
+    #data = "0x010x020x030x040x050x060x070x08"
+    data = xor_encrypt_layered(data, key)
 
     # get the address of the entry-function
     entry = get_entry(objdump)
@@ -284,7 +301,7 @@ def pack(module):
 
     dump = bash(f"objdump -d -M intel {outbinary}")
     for line in dump.split("\n"):
-        if hex(key) in line:
+        if hex(lib.key) in line:
             # check for the address of the key and rebuild the program
             lib.elf_offset_key  = hex(int(line.strip().split(':')[0][2:], 16) + 2)
             break
@@ -306,7 +323,7 @@ def pack(module):
     outfile.close()
 
     # compile the final program as a static executable, containing all the necessary code and data
-    bash(f"{gcc} -g -static -o {outbinary} {out}")   # TODO: remove -g later, just for testing
+    bash(f"{gcc} -g -static -o {outbinary} {out}")   # -s to strip all the debug-symbols
 
     # print the file-info of the compiled binary
     bash(f"file {outbinary}", verbose=True)

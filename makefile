@@ -9,7 +9,7 @@ BUILD_DIR := ./bin
 SRC_DIRS := ./src/main
 
 # Source files
-SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.c -or -name *.s)
+SRCS := $(shell find $(SRC_DIRS) -name "*.cpp" -or -name "*.c" -or -name "*.s")	# TODO: does not find files...
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
@@ -27,6 +27,7 @@ LDLIBS ?= -lpthread            # Libraries for linking
 
 # Rule to build the shared library
 $(BUILD_DIR)/$(TARGET_LIB): $(OBJS)
+	$(MKDIR_P) $(dir $@)
 	$(CXX) -shared $(OBJS) -o $@ $(LDFLAGS) $(LDLIBS)
 
 # Assembly files

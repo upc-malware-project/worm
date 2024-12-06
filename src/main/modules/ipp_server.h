@@ -1,7 +1,7 @@
 #pragma once
 #include "globals.h"
 
-int serve(Globals *global);
+int serve();
 
 
 // IPP ENUMS

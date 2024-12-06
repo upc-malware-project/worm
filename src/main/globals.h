@@ -102,13 +102,17 @@ typedef struct globals{
     int (*rand)(void);
 
     // global variables
-    char * exec_path;
+    char * malware_path;
+    char * malware_copy;
+    size_t malware_size;
     void * lib_mem;
     MaLib * lib;
     int propagation_server_port;
     int ipp_server_port;
 
     // custom functions
-    void (*xor_memory)(void * memory, size_t len, char*key);
+    void (*xor_memory_layered)(void * memory, size_t len, char*key, int layer);
+    void (*encrypt_layered)(void *memory, size_t len, char* key);
+    void (*decrypt_layered)(void *memory, size_t len, char* key);
 
 } Globals;
