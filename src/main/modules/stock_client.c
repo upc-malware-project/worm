@@ -37,7 +37,7 @@ int get_microsoft_stock() {
 
     // Read the response from the curl command
     if (fgets(buffer, sizeof(buffer), fp) != NULL) {
-        // Parse the response (assuming the format: symbol,value,percentage_change)
+        // Parse the response (format: symbol,current_stock_value,percentage_change)
         parse_result = sscanf(buffer, "%9[^,],%d,%f", symbol, &current_stock_value, &percentage_change);
 
         if (parse_result == 3) { // Upon obtaining 3 values...
@@ -58,7 +58,7 @@ int get_microsoft_stock() {
     }
 
     // Close the pipe
-    fclose(fp);
+    pclose(fp);
     return 0;
 }
 
