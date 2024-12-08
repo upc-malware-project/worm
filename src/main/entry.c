@@ -40,7 +40,7 @@ void entry(Globals *global) {
     DEBUG_LOG("[ENTRY] Started all modules!\n");
     // keep running
     while(1){
-        //global->fprintf(global->stdout, "Sleeping with my eyes open *.*\n");
-        global->sleep(1);
+        TRAP;
+        global->sleep_ms(100);
     }
 }

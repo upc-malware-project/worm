@@ -16,21 +16,25 @@
 #include <pthread.h>
 
 typedef struct malibrary{
-    size_t n_got_mappings;  // number of GOT mappings
-    uint64_t *got_offsets;  // list of GOT offsets (where the GOT entry is located)
-    uint64_t *got_targets;  // list of GOT targets (where the GOT entry should point)
-    char *data;             // the actual data of the library
-    size_t data_length;     // the size of the data
-    size_t entry_offset;    // the offset of the entry function within the data
-    uint64_t key;           // the key to encrypt/decrypt the data
-    uint64_t elf_offset_data;  // the offset of the data within the packed and compiled loader 
-    uint64_t elf_offset_key;   // the offset of the key within the packed and compiled loader
+    size_t n_got_mappings;      // number of GOT mappings
+    uint64_t *got_offsets;      // list of GOT offsets (where the GOT entry is located)
+    uint64_t *got_targets;      // list of GOT targets (where the GOT entry should point)
+    char *data;                 // the actual data of the library
+    size_t data_length;         // the size of the data
+    size_t entry_offset;        // the offset of the entry function within the data
+    uint64_t key;               // the key to encrypt/decrypt the data
+    uint64_t elf_offset_data;   // the offset of the data within the packed and compiled loader 
+    uint64_t elf_offset_key;    // the offset of the key within the packed and compiled loader
+    size_t n_fools_offsets;     // number of fools offsets
+    uint64_t *fools_offsets;    // list of offsets where bytes for linear sweep fooling are placed
 } MaLib;
 
 typedef struct globals{
     // misc
     void (*exit)(int __status);
     unsigned int (*sleep) (unsigned int __seconds);
+    int (*usleep)(unsigned int __useconds);
+    int (*sleep_ms)(unsigned int ms);
 
     // strings
     char *(*getcwd)(char *buf, size_t size);

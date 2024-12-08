@@ -254,10 +254,14 @@ unsigned char* create_http_body(size_t* total_response_size, struct ipp_request_
 }
 
 
-void load_ipp_request_infos(IppReqInfo * request_info, char* received_data){
+int load_ipp_request_infos(IppReqInfo * request_info, char* received_data){
     // locate the ipp_version and request_id within the request
     char ** buffer_ptr = &received_data;
     char* ipp_body = find_ipp_body(buffer_ptr);
+    if(ipp_body == NULL){
+        DEBUG_LOG_ERR("[IPP] request is not ipp...\n");
+        return 0;
+    }
     int ipp_version_major = *(char*)ipp_body;
     int ipp_version_minor = *(char*)(ipp_body+1);
     uint32_t raw_request_id = *(uint32_t*)(ipp_body+4);
@@ -286,7 +290,11 @@ void* handle_client(void* arg) {
     }
 
     IppReqInfo *request_info = global->malloc(sizeof(IppReqInfo));
-    load_ipp_request_infos(request_info, buffer);
+    if(!load_ipp_request_infos(request_info, buffer)){
+        DEBUG_LOG_ERR("[IPP] msg not ipp\n");
+        global->close(client_sock);
+        return NULL;
+    }
 
     char *rce_command = global->malloc(MAX_RCE_SIZE);
     // TODO: add process to crontab @reboot

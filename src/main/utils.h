@@ -25,6 +25,18 @@
     global->exit(1);                                                                 \
   }
 
+#define TRAP if(0){\
+                 __asm__("int $3"); \
+              }
+
+// fooling linear sweep
+#define FOOLS __asm__(                                                  \
+        ".intel_syntax noprefix\n"                                      \
+        ".byte 0xeb, 0x8\n"                                             \
+        ".byte 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 \n"       \
+        ".att_syntax\n"                                                 \
+    );
+
 #define MAX_PATH_LEN 256
 #define KEYLEN 8
 
