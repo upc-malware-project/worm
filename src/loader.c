@@ -35,7 +35,7 @@ void decrypt_layered(void *memory, size_t len, char* key);
 typedef void (*MaLibEntry)(Globals *);
 
 void setup_library(MaLib **libp){
-    <lib_setup>
+    //<lib_setup>
 }
 
 int sleep_ms(unsigned int ms){
@@ -109,7 +109,7 @@ void init_globals(Globals *global){
 
     global->poll=&poll;
     global->ioctl=&ioctl;
-    
+
     FOOLS;
     // threads
     global->pthread_create=&pthread_create;

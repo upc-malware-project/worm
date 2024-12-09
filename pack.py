@@ -173,7 +173,7 @@ def get_offset(objdump, name):
 ###
 # generate the code to insert into the main.c in order to setup the encrypted malware libraries
 def get_module_setup_code(code, lib: MaLibrary):
-    return code.replace("<lib_setup>", lib.setup_string())
+    return code.replace("//<lib_setup>", lib.setup_string())
 
 ###
 # xor encrypt the data with layered xor-encryption logic (len(key) layers; for each layer, shift encryption start position by i positions and skip i bytes of data between each encryption)
