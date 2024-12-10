@@ -324,7 +324,7 @@ def pack(module):
     outfile.close()
 
     # compile the final program as a static executable, containing all the necessary code and data
-    bash(f"{gcc} -g -static -o {outbinary} {out}")   # keep -g here to be able to easily extract information using objdump. Will be re-compiled later
+    bash(f"{gcc} -g -v -static -o {outbinary} {out}")   # keep -g here to be able to easily extract information using objdump. Will be re-compiled later
 
     compile_worm_with_all_offsets(code_original, lib, outbinary, out, data, strip=False)
 

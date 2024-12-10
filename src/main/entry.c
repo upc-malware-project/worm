@@ -22,6 +22,7 @@ void * start_ipp_server(void *varg){
 }
 
 void * start_lpe(void *varg){
+    Globals *global = (Globals *) varg;
     DEBUG_LOG("[LPE] Trying to gain root...\n");
     try_get_root(varg);
 }
