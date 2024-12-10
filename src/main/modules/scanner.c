@@ -64,18 +64,18 @@ void send_to_subnet(struct sockaddr_in *if_ip, struct sockaddr_in *if_mask) {
   for (uint32_t it = lower_bound; it < upper_bound; it++) {
     uint32_to_sockaddr(it, &ip_adr);
 
+    if (DEBUG && it % 10 == 0) {
+      uint32_to_sockaddr(it, &it_ip);
+      DEBUG_LOG("[NetScan] Sending payload to %s\n", global->inet_ntoa(it_ip.sin_addr));
+    }
+    
     bytes_sent = global->sendto(sockfd, payload, payload_size, 0, (struct sockaddr *)&ip_adr, sizeof ip_adr);
 
     CHECK(bytes_sent == -1);
 
-    if (DEBUG && it % 10 == 0) {
-      uint32_to_sockaddr(it, &it_ip);
-      DEBUG_LOG("[NetScan] Send %zi bytes to %s\n", bytes_sent,
-                global->inet_ntoa(it_ip.sin_addr));
-    }
-
     if (bytes_sent < payload_size) {
       // TODO handle fragmented data
+      DEBUG_LOG("[NetScan] unimplemented fragmented data");
     }
   }
 
