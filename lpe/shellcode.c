@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #define TMP_PATH "/tmp/present"
 #define PATH_LEN 255
