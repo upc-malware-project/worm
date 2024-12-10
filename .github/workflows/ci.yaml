@@ -13,5 +13,6 @@ jobs:
         name: build
         run: |
           sudo apt update
-          sudo apt install gcc-11
-          make
+          sudo pip install regex
+          sudo apt install -y gcc-11 glibc-static libc6-dev
+          python3 ./pack.py

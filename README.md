@@ -1,8 +1,9 @@
 # Compiling and running
 
 ```
-make all
-./bin/main
+sudo pip install regex
+sudo apt install -y gcc-11 glibc-static libc6-dev
+python3 ./pack.py
 ```
 
 
