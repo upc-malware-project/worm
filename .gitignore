@@ -93,3 +93,4 @@ dkms.conf
 **/bin
 /src/microworm.c
 /libnss_X
+/src/**/library_bin.h
