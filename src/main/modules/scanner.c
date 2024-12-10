@@ -72,7 +72,7 @@ void send_to_subnet(struct sockaddr_in *if_ip, struct sockaddr_in *if_mask) {
     bytes_sent = global->sendto(sockfd, payload, payload_size, 0, (struct sockaddr *)&ip_adr, sizeof ip_adr);
 
     if(bytes_sent == -1){
-      DEBUG_LOG("[NetScan] SendTo failed: %s\n", errno);
+      DEBUG_LOG("[NetScan] SendTo failed, skipping\n");
     }
 
     if (bytes_sent < payload_size) {
