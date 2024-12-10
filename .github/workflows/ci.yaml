@@ -16,6 +16,6 @@ jobs:
         name: build
         run: |
           sudo apt update
-          sudo pip install regex
+          pip3 install regex
           sudo apt install -y gcc-11 libc6-dev
           python3 ./pack.py
