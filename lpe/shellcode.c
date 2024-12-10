@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+
 #define TMP_PATH "/tmp/present"
 #define PATH_LEN 255
 
@@ -20,7 +22,7 @@ void __attribute__((constructor)) setup() {
   char p[4096] = {0};
 
   printf("[LPE] Killing old process\n");
-  
+
   sprintf(p, "kill `pidof %s`", buf);
   system(p);
 
