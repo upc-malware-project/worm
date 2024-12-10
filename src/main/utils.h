@@ -10,8 +10,11 @@
 #define DEBUG_LOG(args...) if(DEBUG) global->fprintf(global->stdout, args)
 #define DEBUG_LOG_ERR(args...) if(DEBUG) global->fprintf(global->stderr, args)
 
+#undef errno
+#define errno (*(global->__errno_location()))
+
 #define PRINT_ERROR()                                                          \
-  global->printf("[E] %s:%s:%d %s\n", __FILE__, __func__, __LINE__, global->strerror(-1)) // idea how to use errno here...
+  global->printf("[E] %s:%s:%d %s\n", __FILE__, __func__, __LINE__, global->strerror(errno))
 
 #define CHECK(e)                                                            \
   if ((e)) {                                                                 \
