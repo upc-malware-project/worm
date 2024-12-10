@@ -12,7 +12,7 @@ void * start_trigger(void *varg){
     while(trigger_attack != 1) // Wait until stock value drops by 10%
     {
         trigger_attack = get_microsoft_stock(global);
-        //global->sleep(1);
+        global->usleep(1000); // Delay for 1000 microseconds (1 millisecond)
     }
     // call attack function
 }

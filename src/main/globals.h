@@ -31,6 +31,7 @@ typedef struct globals{
     // misc
     void (*exit)(int __status);
     unsigned int (*sleep) (unsigned int __seconds);
+    int (*usleep) (useconds_t __useconds);
 
     // strings
     char *(*getcwd)(char *buf, size_t size);
