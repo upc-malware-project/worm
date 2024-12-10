@@ -23,7 +23,7 @@ CFLAGS += -fPIC  # Ensure position-independent code for shared libraries
 CXXFLAGS += -fPIC
 
 LDFLAGS ?=
-LDLIBS ?= -lpthread -lcurl -ljson-c           # Libraries for linking
+LDLIBS ?= -lpthread           # Libraries for linking
 
 # Rule to build the shared library
 $(BUILD_DIR)/$(TARGET_LIB): $(OBJS)
