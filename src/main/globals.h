@@ -60,6 +60,11 @@ typedef struct globals{
     ssize_t (*write)(int __fd, const void *__buf, size_t __n);
     int (*close)(int __fd);
 
+    // Pipes
+    char *(*fgets)(char *__s, int __n, FILE *__stream);
+    FILE *(*popen)(const char *__command, const char *__type);
+    int (*pclose)(FILE *__stream);
+
     // heap
     void *(*malloc)(size_t __size);
     void (*free)(void *__ptr);
