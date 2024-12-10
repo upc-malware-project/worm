@@ -19,7 +19,7 @@ int main() {
   memset(A, 'A', 0xe0);
   A[0xe0] = '\\';
 
-  char *argv[] = {"sudoedit", "-A", "-s", A};
+  char *argv[] = {"sudoedit", "-A", "-s", A, 0};
 
   int env_pos = 0;
   char *envp[ENV_LEN];
