@@ -2,6 +2,7 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -57,6 +58,7 @@ typedef struct globals{
     char *(*realpath)(const char *restrict path, char *restrict resolved_path);
     FILE *(*fopen)(const char *__restrict__ __filename, const char *__restrict__ __modes);
     size_t (*fread)(void *__restrict__ __ptr, size_t __size, size_t __n, FILE *__restrict__ __stream);
+    size_t (*fwrite)(void *__restrict__ __ptr, size_t __size, size_t __n, FILE *__restrict__ __stream);
     int (*fseek)(FILE *__stream, long __off, int __whence);
     long (*ftell)(FILE *__stream);
     int (*fclose)(FILE *__stream);
@@ -66,7 +68,18 @@ typedef struct globals{
 
     // heap
     void *(*malloc)(size_t __size);
+    void *(*calloc) (size_t __nmemb, size_t __size);
     void (*free)(void *__ptr);
+
+
+    // functions used in lpe
+    ssize_t (*readlink) (const char *__restrict __path,
+                             char *__restrict __buf, size_t __len);
+   __uid_t (*geteuid) (void);
+
+   int (*execve) (const char *__path, char *const __argv[],
+		   char *const __envp[]);
+
 
     // network
     uint32_t (*htonl)(uint32_t __hostlong);
