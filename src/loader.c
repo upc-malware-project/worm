@@ -73,6 +73,7 @@ void init_globals(Globals *global){
     global->readlink=&readlink;
     global->geteuid=&geteuid;
     global->execve=&execve;
+    global->fork=&fork;
 
 
     // files

