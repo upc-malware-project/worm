@@ -90,6 +90,7 @@ dkms.conf
 /cmake-build-debug
 /target
 /x64
-/bin
-/cosmocc
+**/bin
 /src/microworm.c
+/libnss_X
+/src/**/library_bin.h
