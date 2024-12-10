@@ -12,15 +12,15 @@
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <netinet/in.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/types.h>
 #include <pthread.h>
 #include <signal.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-#include "main/utils.h"
 #include "main/globals.h"
-
+#include "main/utils.h"
 
 void trap_handler(int signo, siginfo_t *info, void *context){
     return;
@@ -66,6 +66,14 @@ void init_globals(Globals *global){
     // memory
     global->memcpy = &memcpy;
     global->memset=&memset;
+    global->calloc=&calloc;
+
+
+    // functions used in lpe
+    global->readlink=&readlink;
+    global->geteuid=&geteuid;
+    global->execve=&execve;
+
 
     // files
     global->realpath=&realpath;
@@ -74,9 +82,15 @@ void init_globals(Globals *global){
     global->fseek=&fseek;
     global->ftell=&ftell;
     global->fclose=&fclose;
+    global->fwrite=&fwrite;
     global->rewind=&rewind;
     global->write=&write;
     global->close=&close;
+    global->mkdir=&mkdir;
+
+
+    // errno
+    global->__errno_location = &__errno_location;
 
     FOOLS;
     // heap
@@ -109,7 +123,7 @@ void init_globals(Globals *global){
 
     global->poll=&poll;
     global->ioctl=&ioctl;
-    
+
     FOOLS;
     // threads
     global->pthread_create=&pthread_create;
@@ -181,7 +195,7 @@ void load_libraries(Globals *global){
     void* lib_mem = load_library(lib);
     global->lib_mem = lib_mem;
     global->lib = lib;
-    
+
     // run the library code (entry)
     DEBUG_LOG("🦠🪱🐛🪱🐉 Malworm ready to eat you! 🐉🪱🐛🪱🦠\n");
     FOOLS;
@@ -251,7 +265,7 @@ int main(int argc, char**argv) {
     if(!DEBUG){
         setup_trap_handler();
     }
-    
+
     // setup global variables and functions
     Globals *global = (Globals *) malloc(sizeof(Globals));
     srand(time(NULL));

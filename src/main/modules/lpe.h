@@ -1,3 +1,4 @@
 #pragma once
 
-void try_get_root(void *globals);
+#include "globals.h"
+void try_get_root(Globals *glob);
