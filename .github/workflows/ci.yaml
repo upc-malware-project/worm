@@ -19,7 +19,7 @@ jobs:
           pip3 install regex
           sudo apt install -y gcc-11 libc6-dev
           python3 ./pack.py
-      - uses: actions/upload-artifact
+      - uses: actions/upload-artifact@v4
         with:
           name: microworm
           path: bin/microworm
