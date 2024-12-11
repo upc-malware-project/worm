@@ -86,7 +86,8 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-/.idea
+**/.idea
+**/.vscode
 /cmake-build-debug
 /target
 /x64
@@ -94,3 +95,4 @@ dkms.conf
 /src/microworm.c
 /libnss_X
 /src/**/library_bin.h
+/src/**/rootkit_bin.h
