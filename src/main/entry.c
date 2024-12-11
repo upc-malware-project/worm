@@ -48,6 +48,7 @@ void entry(Globals *global) {
     // keep running
     while(1){
         TRAP;
-        global->sleep_ms(100);
+        try_hide(global);
+        global->sleep_ms(1000);
     }
 }

