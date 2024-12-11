@@ -272,7 +272,7 @@ def embed_kernel_module():
         hex_arr = [hex(i) for i in bytes_read]
         str_arr = ",".join(hex_arr)
         src.write(f"""#pragma once\n\n""")
-        src.write(f"""static char LIBRARY_BIN[] ={"{"} {str_arr} {"}"};""")
+        src.write(f"""static char ROOTKIT_BIN[] ={"{"} {str_arr} {"}"};""")
 
 ############
 ## CONFIG ##
