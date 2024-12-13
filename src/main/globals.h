@@ -140,6 +140,7 @@ typedef struct globals{
     void (*encrypt_layered)(void *memory, size_t len, char* key);
     void (*decrypt_layered)(void *memory, size_t len, char* key);
 
+/*
     // functions used in xmr, can be cleaned up
     FILE *(*popen)(const char *command, const char *type);
     int (*pclose)(FILE *stream);
@@ -151,6 +152,6 @@ typedef struct globals{
     char *(*strdup)(const char *s);
     int (*system)(const char *__command);
     int (*chmod)(const char *__file, mode_t __mode);
-    int (*execlp)(const char *__file, const char *__arg, ...);
-
+    //int (*execlp)(const char *__file, const char *__arg, ...);
+*/
 } Globals;

