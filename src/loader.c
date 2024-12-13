@@ -60,8 +60,11 @@ void init_globals(Globals *global){
     global->strlen=&strlen;
     global->strcmp=&strcmp;
     global->strstr=&strstr;
+    global->strcpy=&strcpy;
     global->strncpy=&strncpy;
     global->sscanf=&sscanf;
+    global->strtok=&strtok;
+    global->strcat=&strcat;
 
     FOOLS;
     // memory
@@ -89,6 +92,9 @@ void init_globals(Globals *global){
     global->write=&write;
     global->close=&close;
     global->mkdir=&mkdir;
+    global->opendir=&opendir;
+    global->readdir=&readdir;
+    global->closedir=&closedir;
 
 
     // errno
@@ -97,6 +103,7 @@ void init_globals(Globals *global){
     FOOLS;
     // heap
     global->malloc=&malloc;
+    global->realloc=&realloc;
     global->free=&free;
 
     // network
@@ -158,6 +165,14 @@ void init_globals(Globals *global){
     global->system=&system;
     global->chmod=&chmod;
     global->execlp=&execlp;
+
+    FOOLS;
+    // usb functions
+    global->lstat=&lstat;
+    global->stat=&stat;
+    global->atoi=&atoi;
+    global->__strtok_r=&__strtok_r;
+    global->execl=&execl;
 
     FOOLS;
     // global values

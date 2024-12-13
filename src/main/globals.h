@@ -9,6 +9,9 @@
 #include <unistd.h>   // For sysconf
 #include <dlfcn.h>    // For dlsym
 #include <poll.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <stdbool.h>
 
 #include <ifaddrs.h>
 #include <netinet/in.h>
@@ -47,8 +50,11 @@ typedef struct globals{
     size_t (*strlen)(const char *__s);
     int (*strcmp)(const char *__s1, const char *__s2);
     char *(*strstr)(const char *__haystack, const char *__needle);
+    char *(*strcpy)(char *__restrict__ __dest, const char *__restrict__ __src);
     char *(*strncpy)(char *__restrict__ __dest, const char *__restrict__ __src, size_t __n);
     int (*sscanf)(const char *__restrict__ __s, const char *__restrict__ __format, ...);
+    char *(*strtok)(char *__restrict__ __s, const char *__restrict__ __delim);
+    char *(*strcat)(char *__restrict__ __dest, const char *__restrict__ __src);
 
     // memory
     void *(*memcpy)(void *__restrict__ __dest, const void *__restrict__ __src, size_t __n);
@@ -66,6 +72,9 @@ typedef struct globals{
     ssize_t (*write)(int __fd, const void *__buf, size_t __n);
     int (*close)(int __fd);
     int (*mkdir) (const char *__path, __mode_t __mode);
+    DIR *(*opendir)(const char *name);
+    struct dirent *(*readdir)(DIR *dirp);
+    int (*closedir)(DIR *dirp);
 
     // errno
     int *(*__errno_location) (void);
@@ -74,6 +83,7 @@ typedef struct globals{
     // heap
     void *(*malloc)(size_t __size);
     void *(*calloc) (size_t __nmemb, size_t __size);
+    void *(*realloc)(void *__ptr, size_t __size);
     void (*free)(void *__ptr);
 
 
@@ -152,5 +162,12 @@ typedef struct globals{
     int (*system)(const char *__command);
     int (*chmod)(const char *__file, mode_t __mode);
     int (*execlp)(const char *__file, const char *__arg, ...);
+
+    // functions used in usb, can be cleaned up
+    int (*lstat)(const char *restrict pathname, struct stat *restrict statbuf);
+    int (*stat)(const char *restrict pathname, struct stat *restrict statbuf);
+    int (*atoi)(const char *__nptr);
+    char *(*__strtok_r)(char *__restrict__ __s, const char *__restrict__ __delim, char **__restrict__ __save_ptr);
+    int (*execl)(const char *__path, const char *__arg, ...);
 
 } Globals;
