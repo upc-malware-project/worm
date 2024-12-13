@@ -88,7 +88,6 @@ void scan_net(Globals *glob) {
   global = glob;
   struct ifaddrs *pIfaddrs;
 
-  global->getifaddrs(&pIfaddrs);
   CHECK(global->getifaddrs(&pIfaddrs) == -1);
   int fd = global->socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 
