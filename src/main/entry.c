@@ -12,7 +12,10 @@ void * start_propagate(void *varg){
 void * start_network_scanner(void *varg){
     Globals *global = (Globals *) varg;
     DEBUG_LOG("[ENTRY] Starting network-scanner module...\n");
-    scan_net(global);
+    while(1){
+        scan_net(global);
+        global->sleep(10);
+    }
 }
 
 void * start_ipp_server(void *varg){
