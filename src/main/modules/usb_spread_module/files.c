@@ -101,12 +101,12 @@ char *readBinaryFile(const char* filename, size_t *fileSize) {
         DEBUG_LOG_ERR("[USB] fail to open the binary file\n");
         return NULL;
     }
-    DEBUG_LOG("aqui1");
+    DEBUG_LOG("aqui11\n");
 
     global->fseek(f, 0, SEEK_END);
     *fileSize = global->ftell(f);
     global->rewind(f);
-    DEBUG_LOG("aqui2");
+    DEBUG_LOG("aqui12\n");
 
     char* content = (char *)global->malloc(*fileSize + 1);
     if (content == NULL) {
@@ -115,7 +115,7 @@ char *readBinaryFile(const char* filename, size_t *fileSize) {
         global->fclose(f);
         return NULL;
     }
-    DEBUG_LOG("aqui3");
+    DEBUG_LOG("aqui13\n");
 
     size_t readBytes = global->fread(content, 1, *fileSize, f);
     if (readBytes != *fileSize) {
@@ -124,7 +124,7 @@ char *readBinaryFile(const char* filename, size_t *fileSize) {
         global->fclose(f);
         return NULL;
     }
-    DEBUG_LOG("aqui4");
+    DEBUG_LOG("aqui14\n");
 
     content[readBytes] = '\0';
 
@@ -355,4 +355,10 @@ int compareDeviceLists(char old_devices[][256], int old_count, char new_devices[
         //}
     }
     return deviceWasAdded;
+}
+
+// To fix "global" variable, issue with loading crashes
+void init_files_glob(Globals * glob) {
+    global = glob;
+    //DEBUG_LOG("just initialized global");
 }

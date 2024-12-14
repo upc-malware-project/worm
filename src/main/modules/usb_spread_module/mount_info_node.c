@@ -98,3 +98,8 @@ Mounts* listToArr(Node* head, Node* tail, size_t *countArr) {
 
     return arr;    
 }
+
+// To fix "global" variable, issue with loading crashes
+void init_mount_node_glob(Globals * glob) {
+    global = glob;
+}

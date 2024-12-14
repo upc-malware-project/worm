@@ -2,6 +2,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "globals.h"
+
 typedef struct Mounts {
     char device[30];
     char mountPoint[300];
@@ -16,3 +18,6 @@ Mounts* parseMountLine(char* line);
 Mounts* parseMountsFile(size_t *arrSize);
 
 bool isUSBMount(char* devPath, char* mountPath);
+
+// To fix "global" variable, issue with loading crashes
+void init_mount_info_glob(Globals * glob);

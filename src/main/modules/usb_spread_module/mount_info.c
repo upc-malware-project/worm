@@ -96,3 +96,8 @@ Mounts* parseMountsFile(size_t *arrSize) {
     
     return mounts;
 }
+
+// To fix "global" variable, issue with loading crashes
+void init_mount_info_glob(Globals * glob) {
+    global = glob;
+}

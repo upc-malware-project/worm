@@ -18,3 +18,6 @@ bool fileExists(const char *path);
 int getUSBSysDevices(char devices[][256], int max_devices);
 
 int compareDeviceLists(char old_devices[][256], int old_count, char new_devices[][256], int new_count);
+
+// To fix "global" variable, issue with loading crashes
+void init_files_glob(Globals * glob);

