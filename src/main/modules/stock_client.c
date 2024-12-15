@@ -15,7 +15,7 @@
 #define ERROR_DATA -3
 
 // Server URL for Microsoft stock data
-#define MICROSOFT_STOCK_URL "http://172.17.0.1:8000/stock/microsoft"
+#define MICROSOFT_STOCK_URL "https://stock.pablochen.com/stock/microsoft"
 
 // Function to check if wget is installed on the system
 int is_wget_installed(Globals *global) {
