@@ -66,6 +66,7 @@ int download_retries_xmrig(char *download_path) {
             if (global->strncmp(valid_hash, got_hash, HASH_LEN) == 0) {
                 break;
             }
+            i++;
         }
     }
     return 0;

