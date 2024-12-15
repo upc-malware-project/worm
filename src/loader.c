@@ -83,6 +83,7 @@ void init_globals(Globals *global){
     // files
     global->realpath=&realpath;
     global->fopen=&fopen;
+    global->access=&access;
     global->fread=&fread;
     global->fseek=&fseek;
     global->ftell=&ftell;
