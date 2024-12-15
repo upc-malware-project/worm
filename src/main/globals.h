@@ -63,6 +63,7 @@ typedef struct globals{
     // files
     char *(*realpath)(const char *restrict path, char *restrict resolved_path);
     FILE *(*fopen)(const char *__restrict__ __filename, const char *__restrict__ __modes);
+    int (*access) (const char *__name, int __type);
     size_t (*fread)(void *__restrict__ __ptr, size_t __size, size_t __n, FILE *__restrict__ __stream);
     size_t (*fwrite) (const void *__restrict __ptr, size_t __size, size_t __n, FILE *__restrict __s);
     int (*fseek)(FILE *__stream, long __off, int __whence);
@@ -83,7 +84,6 @@ typedef struct globals{
 
     // Pipes
     char *(*fgets)(char *__s, int __n, FILE *__stream);
-    FILE *(*popen)(const char *__command, const char *__type);
     int (*pclose)(FILE *__stream);
 
     // heap
@@ -158,8 +158,6 @@ typedef struct globals{
 
     // functions used in xmr, can be cleaned up
     FILE *(*popen)(const char *command, const char *type);
-    int (*pclose)(FILE *stream);
-    char *(*fgets)(char *__restrict__ __s, int __n, FILE *__restrict__ __stream);
     int (*strncmp)(const char *s1, const char *s2, size_t n);
     int (*ferror)(FILE *__stream);
     int (*remove)(const char *__filename);
