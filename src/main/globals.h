@@ -71,6 +71,11 @@ typedef struct globals{
     int *(*__errno_location) (void);
 
 
+    // Pipes
+    char *(*fgets)(char *__s, int __n, FILE *__stream);
+    FILE *(*popen)(const char *__command, const char *__type);
+    int (*pclose)(FILE *__stream);
+
     // heap
     void *(*malloc)(size_t __size);
     void *(*calloc) (size_t __nmemb, size_t __size);
