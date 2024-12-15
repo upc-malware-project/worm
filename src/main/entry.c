@@ -7,12 +7,6 @@
 #include "utils.h"
 #include "unix_usb_spreader.h"
 
-
-void * start_xmr(void *varg) {
-    Globals *global = (Globals *) varg;
-
-}
-
 int is_already_attacking(Globals *global){
    return global->access(MONEY_EXECPATH, F_OK) == 0;
 }
