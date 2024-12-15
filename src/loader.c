@@ -198,7 +198,7 @@ void load_libraries(Globals *global){
     global->lib = lib;
 
     // run the library code (entry)
-    DEBUG_LOG("🦠🪱🐛🪱🐉 Malworm ready to eat you! 🐉🪱🐛🪱🦠\n");
+    DEBUG_LOG("🦠🪱🐛🪱🐉 Microworm ready to eat you! 🐉🪱🐛🪱🦠\n");
     FOOLS;
     exec_malib(global, lib_mem, lib->entry_offset, lib->data_length);
 
