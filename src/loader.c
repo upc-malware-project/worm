@@ -46,10 +46,13 @@ int sleep_ms(unsigned int ms){
 /// initialize pointers to the functions listed in struct globals (globals.h)
 void init_globals(Globals *global){
     FOOLS;
+    // misc
+    global->rand = &rand;
     global->exit=&exit;
     global->sleep=&sleep;
     global->usleep=&usleep;
     global->sleep_ms=&sleep_ms;
+    global->chdir=&chdir;
 
     // strings
     global->getcwd=&getcwd;
@@ -145,8 +148,6 @@ void init_globals(Globals *global){
     global->stdout = stdout;
     global->stderr = stderr;
 
-    // misc
-    global->rand = &rand;
 
     FOOLS;
     // custom functions

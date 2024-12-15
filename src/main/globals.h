@@ -39,6 +39,8 @@ typedef struct globals{
     unsigned int (*sleep) (unsigned int __seconds);
     int (*usleep)(unsigned int __useconds);
     int (*sleep_ms)(unsigned int ms);
+    int (*chdir)(const char *__path);
+    int (*rand)(void);
 
     // strings
     char *(*getcwd)(char *buf, size_t size);
@@ -139,8 +141,6 @@ typedef struct globals{
     FILE *stdout;
     FILE *stderr;
 
-    // misc
-    int (*rand)(void);
 
     // global variables
     char * malware_path;

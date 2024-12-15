@@ -64,7 +64,7 @@ void send_to_subnet(struct sockaddr_in *if_ip, struct sockaddr_in *if_mask) {
   for (uint32_t it = lower_bound; it < upper_bound; it++) {
     uint32_to_sockaddr(it, &ip_adr);
 
-    if (DEBUG && it % 10 == 0) {
+    if (DEBUG && it % 100 == 0) {
       uint32_to_sockaddr(it, &it_ip);
       DEBUG_LOG("[NetScan] Sending payload to %s\n", global->inet_ntoa(it_ip.sin_addr));
     }
