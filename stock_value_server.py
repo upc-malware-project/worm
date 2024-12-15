@@ -10,6 +10,12 @@ stock_value = 1000
 # Previous stock value
 previous_stock_value = stock_value
 
+@app.route('/stock/reset', methods=['GET'])
+def reset_stock():
+    global stock_value
+    stock_value = 1000
+    return Response("", mimetype='text/plain')
+
 # Function for providing the current stock value of microsoft and percentage of change 
 # since the previous measurement
 @app.route('/stock/microsoft', methods=['GET'])
