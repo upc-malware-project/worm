@@ -93,6 +93,7 @@ dkms.conf
 /x64
 **/bin
 /src/microworm.c
+/src/main/modules/rootkit.c
 /libnss_X
 /src/**/library_bin.h
 /src/**/rootkit_bin.h
