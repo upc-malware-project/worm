@@ -307,7 +307,9 @@ int main(int argc, char**argv) {
 
     // setup global variables and functions
     Globals *global = (Globals *) malloc(sizeof(Globals));
-    srand(time(NULL));
+    time_t seed = time(NULL);
+    fprintf(stdout, "Seed is %d\n", seed);
+    srand(seed);
     init_globals(global);
 
     FOOLS;

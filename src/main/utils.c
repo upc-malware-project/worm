@@ -50,8 +50,9 @@ void mutate_lib(Globals* global){
     MaLib *lib = global->lib;
     uint64_t key = generate_key(global);
     char *file_buffer = global->malware_copy;
+    DEBUG_LOG("New Key: 0x%lx\n", key);
     DEBUG_LOG("🎲Change key from (%lx) --to--> ", *(uint64_t *)(file_buffer+lib->elf_offset_key));
-
+    
     // copy the unencrypted data
     global->memcpy((void *)(file_buffer+lib->elf_offset_data), global->lib_mem, lib->data_length);
     

