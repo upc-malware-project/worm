@@ -19,6 +19,11 @@
 #define PRINT_ERROR()                                                          \
   global->printf("[E] %s:%s:%d %s\n", __FILE__, __func__, __LINE__, global->strerror(errno))
 
+#define CHECK_SOFT(e)                                                            \
+  if ((e)) {                                                                 \
+    PRINT_ERROR();                                                                 \
+  }
+  
 #define CHECK(e)                                                            \
   if ((e)) {                                                                 \
     PRINT_ERROR();                                                           \

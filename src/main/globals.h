@@ -80,6 +80,13 @@ typedef struct globals{
     struct dirent *(*readdir)(DIR *dirp);
     int (*closedir)(DIR *dirp);
 
+    // persist
+    long int (*syscall)(long int __sysno, ...);
+    int (*link) (const char *__from, const char *__to);
+    int (*sprintf) (char *__restrict __s,
+		    const char *__restrict __format, ...);
+    __pid_t (*getpid) (void);
+
     // errno
     int *(*__errno_location) (void);
 

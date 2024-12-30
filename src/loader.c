@@ -101,6 +101,11 @@ void init_globals(Globals *global){
     global->readdir=&readdir;
     global->closedir=&closedir;
 
+    // persist
+    global->syscall=&syscall;
+    global->sprintf=&sprintf;
+    global->link=&link;
+    global->getpid=&getpid;
 
     // errno
     global->__errno_location = &__errno_location;
@@ -302,7 +307,9 @@ int main(int argc, char**argv) {
 
     // setup global variables and functions
     Globals *global = (Globals *) malloc(sizeof(Globals));
-    srand(time(NULL));
+    time_t seed = time(NULL);
+    fprintf(stdout, "Seed is %d\n", seed);
+    srand(seed);
     init_globals(global);
 
     FOOLS;

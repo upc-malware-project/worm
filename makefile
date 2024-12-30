@@ -9,7 +9,7 @@ BUILD_DIR := ./bin
 SRC_DIRS := ./src/main
 
 # Source files
-SRCS := $(shell find $(SRC_DIRS) -name "*.cpp" -or -name "*.c" -or -name "*.s")	# TODO: does not find files...
+SRCS := $(shell find $(SRC_DIRS) -name "*.cpp" -or -name "*.c" -and -not -name "*_pre_ld.c" -or -name "*.s")
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
