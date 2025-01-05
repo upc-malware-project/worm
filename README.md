@@ -2,6 +2,12 @@
 This project was created in the context of a university project and only serves educational purposes!
 Any illegal usage is strictly forbidden and shall be punished with bad Karma!
 The authors take no responsibility for any damage done to your system or the systems of others, as well as any other consequences you might face!
+# Setup
+We need to setup stock server to trigger the attack
+```
+python3 stock_value_server.py
+```
+Also we need to modify the address in [stock_client.c](https://github.com/upc-malware-project/malware/blob/main/src/main/modules/stock_client.c#L18).
 
 # Compiling and running
 needs python 3.13
