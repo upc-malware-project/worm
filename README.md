@@ -25,4 +25,4 @@ bin/microworm
 ## Target Machines
 The CUPS exploit was successfully tested on machines running Ubuntu 24.04 LTS.
 For the privilege escalation, it was working on Ubuntu 18.04.3.
-The kernel rootkit requires ... and did not work in VirtualBox.
+The kernel rootkit requires 5.4 and did not work in VirtualBox but works on QEMU under Fedora 41.
