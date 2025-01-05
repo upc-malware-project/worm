@@ -17,6 +17,6 @@ bin/microworm
 ```
 
 ## Target Machines
-The tests were executed on a machine running Ubuntu 24.04 LTS.
+The CUPS exploit was successfully tested on machines running Ubuntu 24.04 LTS.
 For the privilege escalation, it was working on Ubuntu 18.04.3.
 The kernel rootkit requires ... and did not work in VirtualBox.
