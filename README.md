@@ -1,5 +1,5 @@
 # Disclaimer
-This project was created in the context of a university project in only serves educational purposes!
+This project was created in the context of a university project and only serves educational purposes!
 Any illegal usage is strictly forbidden and shall be punished with bad Karma!
 The authors take no responsibility for any damage done to your or other systems, as well as any other consequences you might face!
 
